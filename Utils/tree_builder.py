@@ -1,31 +1,7 @@
 from transaction_total import SegWitTx, TX
-from transaction_total_old import TX as TX1
 from Utils.helpers import get_tx, color_print, get_tx_testnet, get_tx_ssh
-from io import BytesIO
-
 
 class TreeBuilder:
-
-    # @classmethod
-    # def buildTree(cls, root_tx, height=float('inf')):
-    #     root = Node(root_tx)
-    #     if root_tx.isCoinbase():
-    #         return root
-    #     if height > 0:
-    #         for txh_in in root_tx.getInputs():
-    #             hex_tx = (txh_in.prevtx).hex()
-    #             try:
-    #                 _tx_in = get_tx(hex_tx)
-    #             except Exception as e:
-    #                 color_print(f"[ERROR] Errore durante il recupero della transazione: {e}","red")
-    #                 continue
-    #             if TX1.isSegWit(_tx_in):
-    #                 tx = TX1.parse(_tx_in, hex_tx, True)
-    #             else:
-    #                 tx = TX1.parse(_tx_in, hex_tx, False)
-    #             child = TreeBuilder.buildTree(tx, height - 1)
-    #             root.addChild(child)
-    #     return root
 
     @classmethod
     def buildTree(cls, root_tx, height=float("inf")):

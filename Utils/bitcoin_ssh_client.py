@@ -1,4 +1,3 @@
-# bitcoin_ssh_client.py
 import paramiko
 
 class BitcoinSSHClient:
