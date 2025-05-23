@@ -1,0 +1,6 @@
+__pycache__/
+ProvaParamiko/
+.env
+Utils/__pycache__/
+*.txt
+transaction_total_old.py
