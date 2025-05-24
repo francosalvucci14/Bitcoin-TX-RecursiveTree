@@ -25,6 +25,7 @@ def main(tx_id, altezza, ssh, testnet):
         if ssh:
             testnet = False
             load_dotenv()
+            
             # Parametri di connessione
             HOST = os.getenv("BITCOIN_HOST") # Indirizzo IP o hostname del server SSH
             USER = os.getenv("USER_SSH") # Nome utente SSH

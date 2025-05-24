@@ -75,50 +75,6 @@ class TreeBuilder:
                 root.addChild(child)
         return root
 
-    def visualize(self, level=0):
-        print(" " * level + "Transaction Tree:")
-
-        # Visualizza l'albero in modo ricorsivo con rami tipo |_ per i livelli
-        def _visualize(node, prefix="", is_last=True, ancestors=[], level=0):
-            branch = ""
-            if level == 0 and prefix == "":
-                branch = "ROOT:"
-            else:
-                for i, ancestor_last in enumerate(ancestors[:-1]):
-                    branch += "   " if ancestor_last else "|  "
-                branch += "`-- " if is_last else "|-- "
-            if node.root.isCoinbase():
-                color_print(branch + "[COINBASE]" + str(node.root.id), "red")
-            else:
-                print(branch + str(node.root.id))
-            child_count = len(node.children)
-            for idx, child in enumerate(node.children):
-                _visualize(
-                    child,
-                    prefix,
-                    idx == child_count - 1,
-                    ancestors + [is_last],
-                    level + 1,
-                )
-
-        _visualize(self, "", True, [], level)
-
-    def save_tree(self, filename):
-        with open(filename, "w") as f:
-
-            def _save(node, level=0):
-                if level == 0:
-                    f.write("ROOT:")
-                else:
-                    f.write("| " + "--" * level)
-                if node.root.isCoinbase():
-                    f.write(" " * level + "[COINBASE]" + str(node.root.id) + "\n")
-                else:
-                    f.write(" " * level + str(node.root.id) + "\n")
-                for child in node.children:
-                    _save(child, level + 1)
-
-            _save(self)
 
 
 class Node:

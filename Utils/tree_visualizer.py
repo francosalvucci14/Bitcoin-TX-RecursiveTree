@@ -1,6 +1,5 @@
 import networkx as nx
 import transaction_total as transaction
-import transaction_total_old as transaction1
 import matplotlib.pyplot as plt
 import matplotlib
 from io import BytesIO
@@ -11,15 +10,15 @@ def add_edges(graph, node, parent=None):
 
     # if transaction.TX.isSegWit(node.root):
     if isinstance(node.root, transaction.SegWitTx):
+        linewidth = 2
         color = "red"
     else:
+        linewidth = 1
         color = "blue"
     if node.root.isCoinbase():
-        linewidth = 5
+        linewidth = 3.5
         color = "green"
-    else:
-        linewidth = 1
-    graph.add_node(node, label=node.root.id, color=color, linewidth=linewidth)
+    graph.add_node(node, label=node.root.id, color=color,linewidth=linewidth)
     if parent is not None:
         graph.add_edge(node, parent)
     for child in node.children:
