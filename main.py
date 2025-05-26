@@ -96,8 +96,9 @@ def main(tx_id, altezza, ssh, testnet):
         # Tree Visualization
         nx_tree = tv.build_nx_tree(tree)
         tv.visualize_tree(nx_tree)
-        
-        exit(0)
+        helpers.color_print("[INFO] Chiudo connessione al full-node SSH", "green")
+        client.close() if ssh else None
+        break
 
 
 if __name__ == "__main__":
@@ -108,25 +109,28 @@ if __name__ == "__main__":
     parser.add_argument(
         "-t",
         "--txid",
+        required=True,
         type=str,
-        help="ID della transazione da analizzare.",
+        help="ID della transazione da analizzare. [OBBLIGATORIO]",
     )
     parser.add_argument(
         "-a",
-        "--altezza",
         type=int,
+        required=False,
         help="Altezza dell'albero da costruire.",
     )
     parser.add_argument(
         "-s",
         "--ssh",
         action="store_true",
+        required=False,
         help="Specifica se vuoi usare la versione che si connette al full-node tramite SSH oppure usare le API di mempool.",
     )
     parser.add_argument(
         "-tn",
         "--testnet",
         action="store_true",
+        required=False,
         help="Specifica se vuoi usare la blockchain della TESTNET oppure usare la blockchain STANDARD.",
     )
     args = parser.parse_args()
