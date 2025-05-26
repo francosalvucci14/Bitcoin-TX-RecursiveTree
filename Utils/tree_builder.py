@@ -89,15 +89,5 @@ class Node:
 
 if __name__ == "__main__":
     tx_hex = get_tx("13e3167d46334600b59a5aa286dd02147ac33e64bfc2e188e1f0c0a442182584")
-    if TX.isSegWit(tx_hex):
-        tx_in = TX.parse(
-            tx_hex,
-            "13e3167d46334600b59a5aa286dd02147ac33e64bfc2e188e1f0c0a442182584",
-            True,
-        )
-    else:
-        tx_in = TX.parse(
-            tx_hex, "13e3167d46334600b59a5aa286dd02147ac33e64bfc2e188e1f0c0a442182584"
-        )
+    tx_in = TX.parse(tx_hex, "13e3167d46334600b59a5aa286dd02147ac33e64bfc2e188e1f0c0a442182584")
     tree = TreeBuilder.buildTree(tx_in, 2)
-    TreeBuilder.visualize(tree)

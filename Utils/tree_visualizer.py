@@ -18,6 +18,9 @@ def add_edges(graph, node, parent=None):
     if node.root.isCoinbase():
         linewidth = 3.5
         color = "green"
+    if isinstance(node.root, transaction.SegWitTx) and node.root.isCoinbase():
+        linewidth = 4
+        color = "orange"
     graph.add_node(node, label=node.root.id, color=color,linewidth=linewidth)
     if parent is not None:
         graph.add_edge(node, parent)
@@ -72,12 +75,16 @@ def visualize_tree(nx_tree):
                         coinbase = True
                     else:
                         coinbase = False
-                    show_json_popup(tx_data, node.root.id, coinbase)
+                    if isinstance(node.root, transaction.SegWitTx):
+                        segwit = True
+                    else:   
+                        segwit = False
+                    show_json_popup(tx_data, node.root.id, coinbase,segwit)
                 except Exception as e:
                     print(f"Errore nel parsing: {e}")
                 break
 
-    def show_json_popup(json_text, id, coinbase=False):
+    def show_json_popup(json_text, id, coinbase=False,segwit=False):
         popup = tk.Tk()
         popup.title("Dati Transazione")
         popup.geometry("600x500")
@@ -86,8 +93,11 @@ def visualize_tree(nx_tree):
 
         text.insert("1.0", f"ID Transazione: {id}\n\n")
         text.insert(
-            "1.0", f"Tipo Transazione: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
-        )
+                "1.0", f"Tipo Transazione: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
+            )
+        text.insert(
+                "1.0", f"SegWit: {'True' if segwit else 'False'}\n\n"
+            )
         text.config(state="disabled")
         text.pack(expand=True, fill="both")
         popup.mainloop()
@@ -95,7 +105,7 @@ def visualize_tree(nx_tree):
     fig.canvas.mpl_connect("button_press_event", on_click)
     plt.title("Clicca su un nodo per vedere i dettagli JSON della transazione")
     # legenda
-    legend_labels = {"red": "SegWit", "blue": "Non SegWit", "green": "Coinbase"}
+    legend_labels = {"red": "SegWit", "blue": "Non SegWit", "green": "Coinbase", "orange": "SegWit Coinbase"}
     legend_handles = [
         plt.Line2D(
             [0],

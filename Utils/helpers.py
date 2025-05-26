@@ -49,13 +49,13 @@ def get_tx_ssh(tx_id, client):
     cmd = f"/home/bitcoin-user/bin/bitcoin-cli getrawtransaction {tx_id}"
 
     try:
-        tx_json = client.run(cmd)
+        tx_hex = client.run(cmd)
     except subprocess.CalledProcessError as e:
         color_print(f"[ERROR] Errore durante l'esecuzione del comando SSH: {e}", "red")
         raise
 
     
-    return BytesIO(bytes.fromhex(tx_json))
+    return BytesIO(bytes.fromhex(tx_hex))
 
 
 def opcodes(fname):
