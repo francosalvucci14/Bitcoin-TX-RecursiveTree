@@ -42,7 +42,7 @@ def get_tx_testnet(tx_id):
     return BytesIO(bytes.fromhex(r.text))
 
 
-def get_tx_ssh(tx_id, client,cmd):
+def get_tx_ssh(tx_id, client):
     color_print("[SSH] Recupero la transazione con id: " + tx_id, "cyan")
 
     # Comando bitcoin-cli
