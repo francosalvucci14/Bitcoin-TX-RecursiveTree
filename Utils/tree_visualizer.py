@@ -6,8 +6,7 @@ from io import BytesIO
 import tkinter as tk
 
 
-def add_edges(graph, node, parent=None):
-
+def add_edges(graph, node, parent=None,count=0):
     # if transaction.TX.isSegWit(node.root):
     if isinstance(node.root, transaction.SegWitTx):
         linewidth = 2
@@ -21,11 +20,14 @@ def add_edges(graph, node, parent=None):
     if isinstance(node.root, transaction.SegWitTx) and node.root.isCoinbase():
         linewidth = 4
         color = "orange"
-    graph.add_node(node, label=node.root.id, color=color,linewidth=linewidth)
+    #graph.add_node(node, label=node.root.id, color=color,linewidth=linewidth)
+    graph.add_node(node, label=count, color=color,linewidth=linewidth)
     if parent is not None:
         graph.add_edge(node, parent)
+    
     for child in node.children:
-        add_edges(graph, child, node)
+        count = count+1
+        add_edges(graph, child, node,count)
 
 
 def build_nx_tree(tree_root):
