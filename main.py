@@ -4,6 +4,8 @@ from Utils.bitcoin_ssh_client import BitcoinSSHClient
 import argparse
 import os
 from dotenv import load_dotenv
+from timeit import default_timer as timer
+from datetime import timedelta
 
 def main(tx_id, altezza, ssh, testnet):
     # 1. ottieni l'hex da cui partire con la generazione dell'albero
@@ -45,6 +47,7 @@ def main(tx_id, altezza, ssh, testnet):
 
         elif testnet:
             ssh = False
+        start = timer()
         try:
             if ssh:
                 tx = helpers.get_tx_ssh(tx_id, client)
@@ -92,7 +95,11 @@ def main(tx_id, altezza, ssh, testnet):
             else:
                 tree = tb.TreeBuilder.buildTreeSSH(tx, client)
         helpers.color_print("[INFO] Albero costruito con successo", "green")
-
+        end = timer()
+        elapsed_time = timedelta(seconds=end - start)
+        helpers.color_print(
+            f"[ALERT] Tempo impiegato per costruire l'albero: {elapsed_time}", "purple"
+        )
         # Tree Visualization
         nx_tree = tv.build_nx_tree(tree)
         tv.visualize_tree(nx_tree)
@@ -141,7 +148,7 @@ if __name__ == "__main__":
             "red",
         )
         exit(1)
-    if args.altezza is None:
+    if args.a is None:
         helpers.color_print(
             "[ALERT] Altezza non fornita. Verrà calcolata l'intera storia della transazione",
             "purple",
@@ -157,4 +164,4 @@ if __name__ == "__main__":
             "purple",
         )
     # mettere anche testnet 3
-    main(args.txid, args.altezza, args.ssh, args.testnet)
+    main(args.txid, args.a, args.ssh, args.testnet)
