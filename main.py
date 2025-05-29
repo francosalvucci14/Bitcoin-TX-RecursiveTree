@@ -181,7 +181,7 @@ if __name__ == "__main__":
     # Se non ci sono argomenti, mostra errore personalizzato
     if len(sys.argv) == 1:
         helpers.color_print("Errore: Nessun argomento fornito. Usa --help per aiuto o --info per informazioni.","red")
-        parser.print_help()
+        #parser.print_help()
         exit(1)
     parser.add_argument("--info", action="store_true", help="Mostra le informazioni sul programma.")
     args = parser.parse_args(remaining_args)
