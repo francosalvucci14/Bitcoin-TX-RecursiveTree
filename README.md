@@ -25,8 +25,7 @@ Puoi stampare le informazioni sul programma con il comando:
 ```bash
 python main.py --info
 ```
-*oppure*<\br>
-Stampare la pagina di help con il comando:
+Puoi anche stampare la pagina di help con il comando:
 ```bash
 python main.py -h
 ```
