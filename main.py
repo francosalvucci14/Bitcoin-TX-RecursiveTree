@@ -129,7 +129,7 @@ def print_info():
 
 if __name__ == "__main__":
     # Prima parser per intercettare solo --info e --version
-    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser = argparse.ArgumentParser(add_help=False,allow_abbrev=False)
     pre_parser.add_argument("--info", action="store_true")
     pre_parser.add_argument("-v", "--version", action="version", version="%(prog)s v{version}".format(version=__version__),)
     
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         )
         print_info()
         exit(0)
-    parser = argparse.ArgumentParser(description=__description__)
+    parser = argparse.ArgumentParser(description=__description__,allow_abbrev=False)
     parser.add_argument("--info", action="store_true", help="Mostra le informazioni sul programma.")
     parser.add_argument(
         "-v",
