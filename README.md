@@ -25,12 +25,12 @@ Puoi stampare le informazioni sul programma con il comando:
 ```bash
 python main.py --info
 ```
-*oppure*
+*oppure*<\br>
 Stampare la pagina di help con il comando:
 ```bash
 python main.py -h
 ```
-Una volta fatot questo, puoi eseguire il programma passando i parametri desiderati:
+Una volta fatto questo, puoi eseguire il programma passando i parametri desiderati:
 
 ```bash
 python main.py -t <txid> [-a <altezza>] [--ssh] [--testnet]
