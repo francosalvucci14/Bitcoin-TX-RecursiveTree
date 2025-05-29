@@ -21,21 +21,29 @@ KEY_FILE=percorso_della_chiave_privata_per_SSH
 ```
 
 ## Utilizzo
-
-Esegui il programma passando i parametri desiderati:
+Puoi stampare le informazioni sul programma con il comando:
+```bash
+python main.py --info
+```
+*oppure*
+Stampare la pagina di help con il comando:
+```bash
+python main.py -h
+```
+Una volta fatot questo, puoi eseguire il programma passando i parametri desiderati:
 
 ```bash
-python main.py -t <txid> [-a <altezza>] [-s] [-tn]
+python main.py -t <txid> [-a <altezza>] [--ssh] [--testnet]
 ```
 
 Parametri:
 1. `-t`, `--txid`: (Obbligatorio) ID della transazione da cui partire.
-2. `-a`, `--altezza`: (Opzionale) Altezza massima dell’albero (intero). Se non specificata, verrà calcolata l'intera storia.
-3. `-s`, `--ssh`: (Opzionale) Abilita connessione a un full-node remoto tramite SSH.
-4. `-tn`, `--testnet`: (Opzionale) Usa la blockchain della Testnet (in alternativa alla MainNet).
+2. `-a` : (Opzionale) Altezza massima dell’albero (intero). Se non specificata, verrà calcolata l'intera storia.
+3. `--ssh`: (Opzionale) Abilita connessione a un full-node remoto tramite SSH.
+4. `--testnet`: (Opzionale) Usa la blockchain della Testnet (in alternativa alla MainNet).
 
 **Nota:**
-L'opzione `--ssh` non può essere usata insieme a ``--testnet``. In tal caso verrà forzata la modalità testnet.
+***Attualmente*** l'opzione `--ssh` non può essere usata insieme a ``--testnet``. In tal caso verrà forzata la modalità testnet.
 
 ## Struttura del progetto
 
