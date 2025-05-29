@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 from timeit import default_timer as timer
 from datetime import timedelta
+import sys
+
 
 __version__ = "1.0"
 __author__ = "Franco Salvucci - Acr0n1m0"
@@ -134,15 +136,17 @@ if __name__ == "__main__":
     pre_parser.add_argument("-v", "--version", action="version", version="%(prog)s v{version}".format(version=__version__),)
     
     args, remaining_args = pre_parser.parse_known_args()
-
+    
     if args.info:
         helpers.color_print(
             "[INFO] Mostro le informazioni sul programma", "green"
         )
         print_info()
         exit(0)
+    
     parser = argparse.ArgumentParser(description=__description__,allow_abbrev=False)
-    parser.add_argument("--info", action="store_true", help="Mostra le informazioni sul programma.")
+    
+
     parser.add_argument(
         "-v",
         "--version",
@@ -174,7 +178,14 @@ if __name__ == "__main__":
         required=False,
         help="Specifica se vuoi usare la blockchain della TESTNET oppure usare la blockchain STANDARD.",
     )
+    # Se non ci sono argomenti, mostra errore personalizzato
+    if len(sys.argv) == 1:
+        helpers.color_print("Errore: Nessun argomento fornito. Usa --help per aiuto o --info per informazioni.","red")
+        parser.print_help()
+        exit(1)
+    parser.add_argument("--info", action="store_true", help="Mostra le informazioni sul programma.")
     args = parser.parse_args(remaining_args)
+    
     
     if args.txid is None:
         helpers.color_print(
