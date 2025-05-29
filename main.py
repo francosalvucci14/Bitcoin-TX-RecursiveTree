@@ -7,6 +7,15 @@ from dotenv import load_dotenv
 from timeit import default_timer as timer
 from datetime import timedelta
 
+__version__ = "1.0"
+__author__ = "Franco Salvucci - Acr0n1m0"
+__program_name__ = "Bitcoin Transaction Tree Builder"
+__description__ = (
+    "Script per costruire e visualizzare l'albero delle transazioni Bitcoin."
+)
+__url__ = "https://github.com/francosalvucci14/Bitcoin-TX-RecursiveTree"
+
+
 def main(tx_id, altezza, ssh, testnet):
     # 1. ottieni l'hex da cui partire con la generazione dell'albero
     # 2. vedi che tipo di tx è, se SegWit oppure no
@@ -27,11 +36,11 @@ def main(tx_id, altezza, ssh, testnet):
         if ssh:
             testnet = False
             load_dotenv()
-            
+
             # Parametri di connessione
-            HOST = os.getenv("BITCOIN_HOST") # Indirizzo IP o hostname del server SSH
-            USER = os.getenv("USER_SSH") # Nome utente SSH
-            KEY_FILE = os.getenv("KEY_FILE") # Percorso della chiave privata SSH
+            HOST = os.getenv("BITCOIN_HOST")  # Indirizzo IP o hostname del server SSH
+            USER = os.getenv("USER_SSH")  # Nome utente SSH
+            KEY_FILE = os.getenv("KEY_FILE")  # Percorso della chiave privata SSH
 
             if not HOST or not USER or not KEY_FILE:
                 helpers.color_print(
@@ -42,7 +51,7 @@ def main(tx_id, altezza, ssh, testnet):
             helpers.color_print(
                 "[INFO] Connessione al full-node Bitcoin tramite SSH", "green"
             )
-            
+
             client = BitcoinSSHClient(host=HOST, user=USER, key_filename=KEY_FILE)
 
         elif testnet:
@@ -72,10 +81,10 @@ def main(tx_id, altezza, ssh, testnet):
 
         # Transaction Parsing
         if SegWitTx.isSegWit(tx):
-            
+
             tx = SegWitTx.parse(tx, tx_id)
         else:
-            
+
             tx = TX.parse(tx, tx_id)
 
         # Tree Building
@@ -103,16 +112,43 @@ def main(tx_id, altezza, ssh, testnet):
         # Tree Visualization
         nx_tree = tv.build_nx_tree(tree)
         tv.visualize_tree(nx_tree)
-        helpers.color_print("[INFO] Chiudo connessione al full-node SSH", "green")
-        client.close() if ssh else None
+        if ssh:
+            client.close()
+            helpers.color_print("[INFO] Chiudo connessione al full-node SSH", "green")
+
         break
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Script per costruire e visualizzare l'albero delle transazioni Bitcoin."
-    )
+def print_info():
+    print(f"Nome: {__program_name__}")
+    print(f"Versione: {__version__}")
+    print(f"Autore: {__author__}")
+    print(f"Descrizione: {__description__}")
+    print(f"Github: {__url__}")
 
+
+if __name__ == "__main__":
+    # Prima parser per intercettare solo --info e --version
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument("--info", action="store_true")
+    pre_parser.add_argument("-v", "--version", action="version", version="%(prog)s v{version}".format(version=__version__),)
+    
+    args, remaining_args = pre_parser.parse_known_args()
+
+    if args.info:
+        helpers.color_print(
+            "[INFO] Mostro le informazioni sul programma", "green"
+        )
+        print_info()
+        exit(0)
+    parser = argparse.ArgumentParser(description=__description__)
+    parser.add_argument("--info", action="store_true", help="Mostra le informazioni sul programma.")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version="%(prog)s v{version}".format(version=__version__),
+    )
     parser.add_argument(
         "-t",
         "--txid",
@@ -124,24 +160,22 @@ if __name__ == "__main__":
         "-a",
         type=int,
         required=False,
-        help="Altezza dell'albero da costruire.",
+        help="Altezza dell'albero da costruire. Se non specificato, verrà calcolata l'intera storia della transazione. [TYPE=%(type)s]",
     )
     parser.add_argument(
-        "-s",
         "--ssh",
         action="store_true",
         required=False,
         help="Specifica se vuoi usare la versione che si connette al full-node tramite SSH oppure usare le API di mempool.",
     )
     parser.add_argument(
-        "-tn",
         "--testnet",
         action="store_true",
         required=False,
         help="Specifica se vuoi usare la blockchain della TESTNET oppure usare la blockchain STANDARD.",
     )
-    args = parser.parse_args()
-
+    args = parser.parse_args(remaining_args)
+    
     if args.txid is None:
         helpers.color_print(
             "[ERROR] ID della transazione non fornito. Utilizzare l'opzione -t o --txid.",
@@ -163,5 +197,6 @@ if __name__ == "__main__":
             "[ALERT] Non è stata fornita l'opzione Testnet. Utilizzerò la blockchain standard.",
             "purple",
         )
+
     # mettere anche testnet 3
     main(args.txid, args.a, args.ssh, args.testnet)
