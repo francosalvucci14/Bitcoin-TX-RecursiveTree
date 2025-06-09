@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from timeit import default_timer as timer
 from datetime import timedelta
 import sys
-import BitcoinTreeGUI as gui
+import Utils.BitcoinTreeGUI as gui
 
 __version__ = "2.0.0"
 __author__ = "Franco Salvucci - Acr0n1m0"
