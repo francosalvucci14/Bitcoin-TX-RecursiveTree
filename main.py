@@ -1,3 +1,4 @@
+#!/bin/python3
 from transaction_total import TX, SegWitTx
 from Utils import helpers, tree_builder as tb, tree_visualizer as tv
 from Utils.bitcoin_ssh_client import BitcoinSSHClient
