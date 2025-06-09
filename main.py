@@ -10,28 +10,22 @@ from datetime import timedelta
 import sys
 import BitcoinTreeGUI as gui
 
-__version__ = "1.5"
+__version__ = "2.0.0"
 __author__ = "Franco Salvucci - Acr0n1m0"
 __program_name__ = "Bitcoin Transaction Tree Builder"
 __description__ = (
-    "Script per costruire e visualizzare l'albero delle transazioni Bitcoin."
+    "Script to build and display Bitcoin transaction tree."
 )
 __url__ = "https://github.com/francosalvucci14/Bitcoin-TX-RecursiveTree"
 
 
 def main(tx_id, altezza, ssh, testnet):
-    # 1. ottieni l'hex da cui partire con la generazione dell'albero
-    # 2. vedi che tipo di tx è, se SegWit oppure no
-    # 3. se è SegWit, chiama la funzione parse di SegWitTx
-    # 4. se non è SegWit, chiama la funzione parse di TX
-    # 5. crea l'albero con la funzione buildTree
-    # 6. visualizza l'albero con la funzione visualize
 
     while True:
         # Transaction Retrieval
         if ssh and testnet:
             helpers.color_print(
-                "[ALERT] Non è possibile usare SSH e Testnet insieme. Utilizzerò TESTNET.",
+                "[ALERT] It is not possible to use SSH and Testnet together. I will use TESTNET.",
                 "purple",
             )
             ssh = False
@@ -47,12 +41,12 @@ def main(tx_id, altezza, ssh, testnet):
 
             if not HOST or not USER or not KEY_FILE:
                 helpers.color_print(
-                    "[ERROR] Variabili d'ambiente non impostate. Assicurati di avere HOST, USER e KEY_FILE.",
+                    "[ERROR] Environment variables not set. Make sure you have HOST, USER and KEY_FILE.",
                     "red",
                 )
                 exit(1)
             helpers.color_print(
-                "[INFO] Connessione al full-node Bitcoin tramite SSH", "green"
+                "[INFO] Connecting to the Bitcoin full-node via SSH", "green"
             )
 
             client = BitcoinSSHClient(host=HOST, user=USER, key_filename=KEY_FILE)
@@ -71,7 +65,7 @@ def main(tx_id, altezza, ssh, testnet):
 
         except Exception as e:
             helpers.color_print(
-                f"[ERROR] Errore durante il recupero della transazione: {e}", "red"
+                f"[ERROR] Error while retrieving transaction: {e}", "red"
             )
             continue
 
@@ -106,15 +100,15 @@ def main(tx_id, altezza, ssh, testnet):
                 tree = tb.TreeBuilder.buildTreeSSH(tx, client, altezza)
             else:
                 tree = tb.TreeBuilder.buildTreeSSH(tx, client)
-        helpers.color_print("[INFO] Albero costruito con successo", "green")
+        helpers.color_print("[INFO] Successfully built tree", "green")
         end = timer()
         elapsed_time = timedelta(seconds=end - start)
         helpers.color_print(
-            f"[ALERT] Tempo impiegato per costruire l'albero: {elapsed_time}", "purple"
+            f"[ALERT] Time taken to build the tree: {elapsed_time}", "purple"
         )
         if ssh:
             client.close()
-            helpers.color_print("[INFO] Chiudo connessione al full-node SSH", "green")
+            helpers.color_print("[INFO] Closing connection to full-node SSH", "green")
 
         # Tree Visualization
         nx_tree = tv.build_nx_tree(tree)
@@ -123,17 +117,17 @@ def main(tx_id, altezza, ssh, testnet):
         break
 
 def print_info():
-    print(f"Nome: {__program_name__}")
-    print(f"Versione: {__version__}")
-    print(f"Autore: {__author__}")
-    print(f"Descrizione: {__description__}")
+    print(f"Name: {__program_name__}")
+    print(f"Version: {__version__}")
+    print(f"Autor: {__author__}")
+    print(f"Description: {__description__}")
     print(f"Github: {__url__}")
 
 
 if __name__ == "__main__":
     # Prima parser per intercettare solo --info e --version
     pre_parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
-    pre_parser.add_argument("--info", action="store_true")
+    pre_parser.add_argument("-i","--info", action="store_true")
     pre_parser.add_argument(
         "-v",
         "--version",
@@ -148,82 +142,80 @@ if __name__ == "__main__":
     args, remaining_args = pre_parser.parse_known_args()
 
     if args.info:
-        helpers.color_print("[INFO] Mostro le informazioni sul programma", "green")
+        helpers.color_print("[INFO] Showing the program information", "green")
         print_info()
         exit(0)
     if args.gui:
         helpers.color_print(
-            "[INFO] Avvio l'interfaccia grafica per la costruzione dell'albero delle transazioni.",
+            "[INFO] Starting the graphical interface for building the transaction tree.",
             "green",
         )
         gui.main()
         exit(1)
     parser = argparse.ArgumentParser(description=__description__, allow_abbrev=False)
 
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version="%(prog)s v{version}".format(version=__version__),
-    )
+
     parser.add_argument(
         "-t",
         "--txid",
         required=True,
         type=str,
-        help="ID della transazione da analizzare. [OBBLIGATORIO]",
+        help="ID of the transaction to analyze. [REQUIRED]",
     )
     parser.add_argument(
         "-a",
         type=int,
         required=False,
-        help="Altezza dell'albero da costruire. Se non specificato, verrà calcolata l'intera storia della transazione. [TYPE=%(type)s]",
+        help="Height of the tree to build. If not specified, the entire transaction history will be calculated. [TYPE=%(type)s]",
     )
     parser.add_argument(
         "--ssh",
         action="store_true",
         required=False,
-        help="Specifica se vuoi usare la versione che si connette al full-node tramite SSH oppure usare le API di mempool.",
+        help="Specify whether you want to use the version that connects to the full-node via SSH or use the mempool APIs.",
     )
     parser.add_argument(
         "--testnet",
         action="store_true",
         required=False,
-        help="Specifica se vuoi usare la blockchain della TESTNET oppure usare la blockchain STANDARD.",
+        help="Specify whether you want to use the TESTNET blockchain or use the STANDARD blockchain.",
     )
     
     # Se non ci sono argomenti, mostra errore personalizzato
     if len(sys.argv) == 1:
         helpers.color_print(
-            "Errore: Nessun argomento fornito. Usa --help per aiuto o --info per informazioni.",
+            "[Error] No arguments provided. Use --help or --info",
             "red",
         )
         # parser.print_help()
         exit(1)
     parser.add_argument(
-        "--info", action="store_true", help="Mostra le informazioni sul programma."
+        "-i","--info", action="store_true", help="Show the program info."
+    )
+    parser.add_argument(
+        "-g","--gui", action="store_true", help="Start the GUI."
     )
     args = parser.parse_args(remaining_args)
 
     if args.txid is None:
         helpers.color_print(
-            "[ERROR] ID della transazione non fornito. Utilizzare l'opzione -t o --txid.",
+            "[ERROR] Transaction ID not provided. Use -t or --txid option.",
             "red",
         )
         exit(1)
     if args.a is None:
         helpers.color_print(
-            "[ALERT] Altezza non fornita. Verrà calcolata l'intera storia della transazione",
+            "[ALERT] Height not provided. The entire transaction history will be calculated",
             "purple",
         )
     if not args.ssh:
         helpers.color_print(
-            "[ALERT] Non è stata fornita l'opzione SSH. Utilizzerò le API di mempool.",
+            "[ALERT] SSH option not provided. I will use mempool API.",
             "purple",
         )
     if not args.testnet:
         helpers.color_print(
-            "[ALERT] Non è stata fornita l'opzione Testnet. Utilizzerò la blockchain standard.",
+            "[ALERT] Testnet option not provided. I will use standard blockchain.",
             "purple",
         )
     # mettere anche testnet 3

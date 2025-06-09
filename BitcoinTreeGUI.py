@@ -1,323 +1,318 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import networkx as nx
+from Utils import helpers, tree_builder as tb, tree_visualizer as tv
+from transaction_total import TX, SegWitTx
+from Utils.bitcoin_ssh_client import BitcoinSSHClient
 import os
 from dotenv import load_dotenv
-from datetime import timedelta
-from timeit import default_timer as timer
-import Utils.helpers as helpers
-import Utils.tree_builder as tb
-import Utils.tree_visualizer as tv
-from transaction_total import TX,SegWitTx
-from Utils.bitcoin_ssh_client import BitcoinSSHClient
-import networkx as nx
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import transaction_total as transaction
-import transaction_total as transaction
+import threading
 
-import matplotlib.pyplot as plt
-
-def add_edges(graph, node, parent=None, count=0):
-    # if transaction.TX.isSegWit(node.root):
-    if isinstance(node.root, transaction.SegWitTx):
-        linewidth = 2
-        color = "red"
-    else:
-        linewidth = 1
-        color = "blue"
-    if node.root.isCoinbase():
-        linewidth = 3.5
-        color = "green"
-    if isinstance(node.root, transaction.SegWitTx) and node.root.isCoinbase():
-        linewidth = 4
-        color = "orange"
-    graph.add_node(node, label=count, color=color, linewidth=linewidth)
-    if parent is not None:
-        graph.add_edge(node, parent)
-
-    for child in node.children:
-        count = count + 1
-        add_edges(graph, child, node, count)
-
-def build_nx_tree(tree_root):
-    graph = nx.DiGraph()
-    add_edges(graph, tree_root)
-    return graph
-
-def visualize_tree_in_gui(nx_tree, tk_text_widget):
-    # Clear previous matplotlib figures in the widget's parent
-    parent = tk_text_widget.master
-    for widget in parent.winfo_children():
-        if isinstance(widget, FigureCanvasTkAgg):
-            widget.get_tk_widget().destroy()
-
-    pos = nx.drawing.nx_agraph.graphviz_layout(nx_tree, prog="dot")
-    pos = {node: (x, -y) for node, (x, y) in pos.items()}
-    labels = nx.get_node_attributes(nx_tree, "label")
-    colors = nx.get_node_attributes(nx_tree, "color")
-    border_thicknesses = nx.get_node_attributes(nx_tree, "linewidth")
-
-    colors = [colors[node] for node in nx_tree.nodes()]
-    border_thicknesses = [border_thicknesses[node] for node in nx_tree.nodes()]
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    nx.draw(
-        nx_tree,
-        pos,
-        with_labels=True,
-        labels=labels,
-        linewidths=border_thicknesses,
-        node_size=2000,
-        node_color=colors,
-        edgecolors="black",
-        font_size=8,
-        ax=ax,
-    )
-
-    # Click event for nodes
-    def on_click(event):
-        if event.inaxes != ax:
-            return
-        click_x, click_y = event.xdata, event.ydata
-        for node, (x, y) in pos.items():
-            dist = ((click_x - x) ** 2 + (click_y - y) ** 2) ** 0.5
-            if dist < 15:
-                try:
-                    tx_data = str(node.root)
-                    coinbase = node.root.isCoinbase()
-                    segwit = isinstance(node.root, transaction.SegWitTx)
-                    show_json_popup_in_gui(tx_data, node.root.id, coinbase, segwit, parent)
-                except Exception as e:
-                    print(f"Errore nel parsing: {e}")
-                break
-
-    def show_json_popup_in_gui(json_text, id, coinbase, segwit, parent):
-        popup = tk.Toplevel(parent)
-        popup.title("Dati Transazione")
-        popup.geometry("600x500")
-        text = tk.Text(popup, wrap="word")
-        text.insert("1.0", json_text)
-        text.insert("1.0", f"ID Transazione: {id}\n\n")
-        text.insert(
-            "1.0", f"Tipo Transazione: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
-        )
-        text.insert("1.0", f"SegWit: {'True' if segwit else 'False'}\n\n")
-        text.config(state="disabled")
-        text.pack(expand=True, fill="both")
-
-    fig.canvas.mpl_connect("button_press_event", on_click)
-    plt.title("Clicca su un nodo per vedere i dettagli JSON della transazione")
-    # legenda
-    legend_labels = {
-        "red": "SegWit",
-        "blue": "Non SegWit",
-        "green": "Coinbase",
-        "orange": "SegWit Coinbase",
-    }
-    legend_handles = [
-        plt.Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="w",
-            label=label,
-            markerfacecolor=color,
-            markersize=10,
-        )
-        for color, label in legend_labels.items()
-    ]
-    ax.legend(handles=legend_handles, loc="upper right")
-    plt.axis("off")
-    plt.tight_layout()
-
-    # Embed the matplotlib figure in the Tkinter GUI
-    canvas = FigureCanvasTkAgg(fig, master=parent)
-    canvas.draw()
-    canvas.get_tk_widget().pack(fill="both", expand=True)
-
-
-def main_construction_tree(tx_id, altezza, ssh, testnet):
-
-    while True:
-        # Transaction Retrieval
-        if ssh and testnet:
-            helpers.color_print(
-                "[ALERT] Non è possibile usare SSH e Testnet insieme. Utilizzerò TESTNET.",
-                "purple",
-            )
-            ssh = False
-            testnet = True
-        if ssh:
-            testnet = False
-            load_dotenv()
-
-            # Parametri di connessione
-            HOST = os.getenv("BITCOIN_HOST")  # Indirizzo IP o hostname del server SSH
-            USER = os.getenv("USER_SSH")  # Nome utente SSH
-            KEY_FILE = os.getenv("KEY_FILE")  # Percorso della chiave privata SSH
-
-            if not HOST or not USER or not KEY_FILE:
-                helpers.color_print(
-                    "[ERROR] Variabili d'ambiente non impostate. Assicurati di avere HOST, USER e KEY_FILE.",
-                    "red",
-                )
-                exit(1)
-            helpers.color_print(
-                "[INFO] Connessione al full-node Bitcoin tramite SSH", "green"
-            )
-
-            client = BitcoinSSHClient(host=HOST, user=USER, key_filename=KEY_FILE)
-
-        elif testnet:
-            ssh = False
-        start = timer()
-        try:
-            if ssh:
-                tx = helpers.get_tx_ssh(tx_id, client)
-            else:
-                if testnet:
-                    tx = helpers.get_tx_testnet(tx_id)
-                else:
-                    tx = helpers.get_tx(tx_id)
-
-        except Exception as e:
-            helpers.color_print(
-                f"[ERROR] Errore durante il recupero della transazione: {e}", "red"
-            )
-            continue
-
-        # Set Tree Height
-        if altezza is not None:
-            altezza = int(altezza)
-            altezza_noTot = True
-        else:
-            altezza_noTot = False
-
-        # Transaction Parsing
-        if SegWitTx.isSegWit(tx):
-
-            tx = SegWitTx.parse(tx, tx_id)
-        else:
-
-            tx = TX.parse(tx, tx_id)
-
-        # Tree Building
-        if not testnet and not ssh:
-            if altezza_noTot == True:
-                tree = tb.TreeBuilder.buildTree(tx, altezza)
-            else:
-                tree = tb.TreeBuilder.buildTree(tx)
-        if testnet:
-            if altezza_noTot == True:
-                tree = tb.TreeBuilder.buildTreeTESTNET(tx, altezza)
-            else:
-                tree = tb.TreeBuilder.buildTreeTESTNET(tx)
-        if ssh:
-            if altezza_noTot == True:
-                tree = tb.TreeBuilder.buildTreeSSH(tx, client, altezza)
-            else:
-                tree = tb.TreeBuilder.buildTreeSSH(tx, client)
-        helpers.color_print("[INFO] Albero costruito con successo", "green")
-        end = timer()
-        elapsed_time = timedelta(seconds=end - start)
-        helpers.color_print(
-            f"[ALERT] Tempo impiegato per costruire l'albero: {elapsed_time}", "purple"
-        )
-        if ssh:
-            client.close()
-            helpers.color_print("[INFO] Chiudo connessione al full-node SSH", "green")
-
-        # Tree Visualization
-        nx_tree = tv.build_nx_tree(tree)
-        return nx_tree  # Return the tree for GUI handling
-
-
-
-PROGRAM_INFO = (
-    "BitcoinTreeGUI\n"
-    "Progetto Esame PCD - Tor Vergata\n"
-    "Permette di costruire l'albero Merkle di una transazione Bitcoin.\n"
-    "Inserisci il TXID, opzionalmente l'altezza, scegli SSH o Testnet e premi 'Costruisci Albero'."
+# Program Information (from main.py for consistency)
+__version__ = "2.0.0"
+__author__ = "Franco Salvucci - Acr0n1m0"
+__program_name__ = "Bitcoin Transaction Tree Builder"
+__description__ = (
+    "Script per costruire e visualizzare l'albero delle transazioni Bitcoin."
 )
+__url__ = "https://github.com/francosalvucci14/Bitcoin-TX-RecursiveTree"
 
-class BitcoinTreeGUI(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("BitcoinTreeGUI")
-        self.geometry("600x400")
+
+class BitcoinTreeGUI:
+    def __init__(self, master):
+        self.master = master
+        master.title("Bitcoin Transaction Tree Builder")
+        master.geometry("800x700") # Dimensione iniziale della finestra
+
+        self.log_text_widget = None  # Initialize to None
+
         self.create_widgets()
 
     def create_widgets(self):
-        # TXID
-        txid_frame = ttk.Frame(self)
-        txid_frame.pack(fill='x', padx=10, pady=5)
-        ttk.Label(txid_frame, text="TXID:").pack(side='left')
-        self.txid_entry = ttk.Entry(txid_frame)
-        self.txid_entry.pack(side='left', fill='x', expand=True)
+        # Input Frame - Contiene tutti gli input e i bottoni di controllo
+        input_frame = tk.Frame(self.master, padx=15, pady=15, bd=2, relief="groove")
+        input_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=10)
 
-        # Altezza (opzionale)
-        height_frame = ttk.Frame(self)
-        height_frame.pack(fill='x', padx=10, pady=5)
-        ttk.Label(height_frame, text="Altezza (opzionale):").pack(side='left')
-        self.height_entry = ttk.Entry(height_frame)
-        self.height_entry.pack(side='left', fill='x', expand=True)
-        self.height_entry.insert(0, "")
+        # Configura le colonne per un allineamento migliore
+        input_frame.grid_columnconfigure(0, weight=0) # Colonna per le label, non espandibile
+        input_frame.grid_columnconfigure(1, weight=1) # Colonna per gli input, espandibile
+        input_frame.grid_columnconfigure(2, weight=0) # Colonna per i bottoni, non espandibile
 
-        # Opzioni SSH / Testnet
-        options_frame = ttk.LabelFrame(self, text="Opzioni")
-        options_frame.pack(fill='x', padx=10, pady=5)
+        # Transaction ID
+        tk.Label(input_frame, text="Transaction ID:").grid(row=0, column=0, sticky="w", pady=5, padx=5)
+        self.txid_entry = tk.Entry(input_frame, width=60)
+        self.txid_entry.grid(row=0, column=1, sticky="ew", pady=5, padx=5)
+
+        # Tree Height
+        tk.Label(input_frame, text="Tree Height (optional):").grid(row=1, column=0, sticky="w", pady=5, padx=5)
+        self.height_entry = tk.Entry(input_frame, width=60)
+        self.height_entry.grid(row=1, column=1, sticky="ew", pady=5, padx=5)
+
+        # SSH and Testnet Checkbuttons
         self.ssh_var = tk.BooleanVar()
+        self.ssh_check = tk.Checkbutton(input_frame, text="Use SSH", var=self.ssh_var)
+        self.ssh_check.grid(row=2, column=0, sticky="w", pady=5, padx=5)
+
         self.testnet_var = tk.BooleanVar()
-        ttk.Checkbutton(options_frame, text="Usa SSH", variable=self.ssh_var).pack(side='left', padx=5)
-        ttk.Checkbutton(options_frame, text="Usa Testnet", variable=self.testnet_var).pack(side='left', padx=5)
+        self.testnet_check = tk.Checkbutton(input_frame, text="Use Testnet", var=self.testnet_var)
+        self.testnet_check.grid(row=2, column=1, sticky="w", pady=5, padx=5)
 
-        # Pulsanti
-        buttons_frame = ttk.Frame(self)
-        buttons_frame.pack(fill='x', padx=10, pady=5)
-        self.build_button = ttk.Button(buttons_frame, text="Costruisci Albero", command=self.on_build)
-        self.build_button.pack(side='left', padx=5)
-        self.info_button = ttk.Button(buttons_frame, text="INFO", command=self.on_info)
-        self.info_button.pack(side='left', padx=5)
+        # Buttons Frame (per raggruppare Build Tree, Info, Exit)
+        buttons_frame = tk.Frame(input_frame)
+        buttons_frame.grid(row=3, column=0, columnspan=2, pady=10) # Centrato sotto gli input
 
-        # Output
-        self.output_text = tk.Text(self, height=15, wrap='word', state='disabled')
-        self.output_text.pack(fill='both', expand=True, padx=10, pady=5)
+        self.build_button = tk.Button(buttons_frame, text="Build Tree", command=self.start_build_tree_thread, width=15, height=2)
+        self.build_button.pack(side=tk.LEFT, padx=10)
 
-    def on_build(self):
-        self.set_output("Costruzione dell'albero in corso...")
-        txid = self.txid_entry.get().strip()
-        height = self.height_entry.get().strip()
-        use_ssh = self.ssh_var.get()
-        use_testnet = self.testnet_var.get()
+        self.info_button = tk.Button(buttons_frame, text="Info", command=self.display_info, width=15, height=2)
+        self.info_button.pack(side=tk.LEFT, padx=10)
 
-        if not txid:
-            self.set_output("Errore: inserire un TXID valido.")
+        self.exit_button = tk.Button(buttons_frame, text="Exit", command=self.on_closing, width=15, height=2)
+        self.exit_button.pack(side=tk.LEFT, padx=10)
+
+        # Log Frame
+        log_frame = tk.LabelFrame(self.master, text="Logs", padx=10, pady=10, bd=2, relief="groove")
+        log_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=False, padx=10, pady=5)
+
+        self.log_text_widget = tk.Text(log_frame, height=8, state="disabled", wrap="word")
+        self.log_text_widget.pack(fill=tk.BOTH, expand=True)
+        # Configure tags for colors
+        self.log_text_widget.tag_config("red", foreground="red")
+        self.log_text_widget.tag_config("green", foreground="green")
+        self.log_text_widget.tag_config("blue", foreground="blue")
+        self.log_text_widget.tag_config("cyan", foreground="cyan")
+        self.log_text_widget.tag_config("purple", foreground="purple")
+
+
+        # Matplotlib Canvas Frame
+        self.canvas_frame = tk.Frame(self.master, bd=2, relief="groove")
+        self.canvas_frame.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        self.figure = plt.Figure(figsize=(6, 5), dpi=100)
+        self.ax = self.figure.add_subplot(111)
+        self.canvas = FigureCanvasTkAgg(self.figure, master=self.canvas_frame)
+        self.canvas_widget = self.canvas.get_tk_widget()
+        self.canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # Imposta il protocollo per la chiusura della finestra
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def log_message(self, message, color="black"):
+        if self.log_text_widget:
+            self.log_text_widget.config(state="normal")
+            self.log_text_widget.insert(tk.END, message + "\n", color)
+            self.log_text_widget.config(state="disabled")
+            self.log_text_widget.see(tk.END) # Auto-scroll to the end
+
+    def display_info(self):
+        self.log_text_widget.config(state="normal")
+        self.log_text_widget.delete("1.0", tk.END)
+        self.log_text_widget.config(state="disabled")
+        self.log_message("[INFO] Displaying program information:", "green")
+        self.log_message(f"Nome: {__program_name__}", "blue") # Program Name
+        self.log_message(f"Versione: {__version__}", "blue") # Version
+        self.log_message(f"Autore: {__author__}", "blue") # Author
+        self.log_message(f"Descrizione: {__description__}", "blue") # Description
+        self.log_message(f"Github: {__url__}", "blue") # Github URL
+
+    def start_build_tree_thread(self):
+        tx_id = self.txid_entry.get().strip()
+        height_str = self.height_entry.get().strip()
+        ssh = self.ssh_var.get()
+        testnet = self.testnet_var.get()
+
+        if not tx_id:
+            messagebox.showerror("Input Error", "Transaction ID cannot be empty.")
             return
 
-        height_val = height if height else None
-        nx_tree = main_construction_tree(txid, height_val, use_ssh, use_testnet)
-        if nx_tree is not None:
-            visualize_tree_in_gui(nx_tree, self.output_text)
-        else:
-            self.set_output("Errore durante la costruzione dell'albero.")
-        self.set_output("Albero costruito con successo. Clicca sui nodi per vedere i dettagli.")
-        # cancella albero dopo un'altro click
+        self.clear_plot()
+        self.log_text_widget.config(state="normal")
+        self.log_text_widget.delete("1.0", tk.END)
+        self.log_text_widget.config(state="disabled")
+        self.log_message("[INFO] Starting tree building process...", "blue")
+        
+        # Disable buttons during processing
+        self.build_button.config(state="disabled")
+        self.exit_button.config(state="disabled")
+        self.info_button.config(state="disabled")
 
-    def on_info(self):
-        self.set_output(PROGRAM_INFO)
+        # Use a thread for the long-running operation
+        threading.Thread(target=self.build_tree, args=(tx_id, height_str, ssh, testnet)).start()
 
-    def set_output(self, text):
-        self.output_text.config(state='normal')
-        self.output_text.delete(1.0, tk.END)
-        self.output_text.insert(tk.END, text)
-        self.output_text.config(state='disabled')
+    def build_tree(self, tx_id, height_str, ssh, testnet):
+        try:
+            altezza = int(height_str) if height_str else None
+
+            # Handle SSH and Testnet conflict
+            if ssh and testnet:
+                self.log_message("[ALERT] Cannot use SSH and Testnet together. Using TESTNET.", "purple") # Alert message
+                ssh = False
+                testnet = True
+            
+            client = None
+            if ssh:
+                load_dotenv()
+                HOST = os.getenv("BITCOIN_HOST")
+                USER = os.getenv("USER_SSH")
+                KEY_FILE = os.getenv("KEY_FILE")
+
+                if not HOST or not USER or not KEY_FILE:
+                    self.log_message("[ERROR] Environment variables not set for SSH. Ensure HOST, USER, and KEY_FILE are configured.", "red") # Error message
+                    messagebox.showerror("SSH Error", "Environment variables for SSH are not set.")
+                    self.build_button.config(state="normal")
+                    self.exit_button.config(state="normal")
+                    self.info_button.config(state="normal")
+                    return
+                self.log_message("[INFO] Connecting to Bitcoin full-node via SSH", "green") # Info message
+                client = BitcoinSSHClient(host=HOST, user=USER, key_filename=KEY_FILE) # SSH client connection
+            elif not testnet: # Only if not testnet, indicate standard blockchain
+                self.log_message("[ALERT] Not using Testnet. Will use the standard blockchain.", "purple") # Alert message
+
+            self.log_message(f"[INFO] Retrieving transaction with ID: {tx_id}", "cyan") # Info message
+            if ssh:
+                tx_hex_stream = helpers.get_tx_ssh(tx_id, client) # Get transaction via SSH
+            elif testnet:
+                tx_hex_stream = helpers.get_tx_testnet(tx_id) # Get transaction via Testnet API
+            else:
+                tx_hex_stream = helpers.get_tx(tx_id) # Get transaction via Mempool API
+
+            if SegWitTx.isSegWit(tx_hex_stream): # Check if SegWit transaction
+                tx = SegWitTx.parse(tx_hex_stream, tx_id) # Parse as SegWit transaction
+            else:
+                tx = TX.parse(tx_hex_stream, tx_id) # Parse as standard transaction
+
+            self.log_message("[INFO] Transaction parsed successfully.", "green")
+
+            tree = None
+            if not testnet and not ssh:
+                tree = tb.TreeBuilder.buildTree(tx, altezza) if altezza is not None else tb.TreeBuilder.buildTree(tx) # Build tree
+            elif testnet:
+                tree = tb.TreeBuilder.buildTreeTESTNET(tx, altezza) if altezza is not None else tb.TreeBuilder.buildTreeTESTNET(tx) # Build Testnet tree
+            elif ssh:
+                tree = tb.TreeBuilder.buildTreeSSH(tx, client, altezza) if altezza is not None else tb.TreeBuilder.buildTreeSSH(tx, client) # Build SSH tree
+
+            self.log_message("[INFO] Tree built successfully.", "green") # Info message
+            
+            if client:
+                client.close() # Close SSH client
+                self.log_message("[INFO] Closed SSH connection to full-node.", "green") # Info message
+
+            # Visualize the tree
+            self.log_message("[INFO] Visualizing the tree...", "blue")
+            self.display_tree(tree) # Display the generated tree
+            self.log_message("[INFO] Tree visualization complete.", "green")
+
+        except Exception as e:
+            self.log_message(f"[ERROR] An error occurred: {e}", "red")
+            messagebox.showerror("Error", f"An error occurred: {e}")
+        finally:
+            self.build_button.config(state="normal")
+            self.exit_button.config(state="normal")
+            self.info_button.config(state="normal")
+
+
+    def clear_plot(self):
+        self.ax.clear()
+        self.canvas.draw_idle()
+
+    def display_tree(self, tree_root):
+        self.ax.clear()  # Clear previous plot
+        nx_tree = tv.build_nx_tree(tree_root) # Build NetworkX tree
+        
+        pos = nx.drawing.nx_agraph.graphviz_layout(nx_tree, prog="dot")
+        pos = {node: (x, -y) for node, (x, y) in pos.items()}
+        labels = nx.get_node_attributes(nx_tree, "label")
+        colors = nx.get_node_attributes(nx_tree, "color")
+        border_thicknesses = nx.get_node_attributes(nx_tree, "linewidth")
+
+        node_colors = [colors[node] for node in nx_tree.nodes()]
+        node_border_thicknesses = [border_thicknesses[node] for node in nx_tree.nodes()]
+
+        nx.draw(
+            nx_tree,
+            pos,
+            with_labels=True,
+            labels=labels,
+            linewidths=node_border_thicknesses,
+            node_size=2000,
+            node_color=node_colors,
+            edgecolors="black",
+            font_size=8,
+            ax=self.ax,
+        )
+
+        self.ax.set_title("Click on a node for transaction details", fontsize=10)
+        
+        # Legend
+        legend_labels = {
+            "red": "SegWit",
+            "blue": "Non SegWit",
+            "green": "Coinbase",
+            "orange": "SegWit Coinbase",
+        }
+        legend_handles = [
+            plt.Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="w",
+                label=label,
+                markerfacecolor=color,
+                markersize=10,
+            )
+            for color, label in legend_labels.items()
+        ]
+        self.ax.legend(handles=legend_handles, loc="upper right", fontsize=8)
+        self.ax.axis("off")
+        self.figure.tight_layout()
+        self.canvas.draw()
+
+        # Connect click event to the Matplotlib canvas
+        def on_click(event):
+            if event.inaxes != self.ax:
+                return
+            click_x, click_y = event.xdata, event.ydata
+            for node, (x, y) in pos.items():
+                dist = ((click_x - x) ** 2 + (click_y - y) ** 2) ** 0.5
+                if dist < 15: # Tolerance radius
+                    try:
+                        tx_data = str(node.root)
+                        coinbase = node.root.isCoinbase()
+                        segwit = isinstance(node.root, SegWitTx)
+                        self.show_json_popup(tx_data, node.root.id, coinbase, segwit)
+                    except Exception as e:
+                        self.log_message(f"Error parsing transaction data: {e}", "red")
+                    break
+        
+        self.figure.canvas.mpl_connect("button_press_event", on_click)
+
+
+    def show_json_popup(self, json_text, tx_id, coinbase=False, segwit=False):
+        popup = tk.Toplevel(self.master)
+        popup.title("Transaction Data")
+        popup.geometry("600x500")
+
+        header_info = f"ID Transazione: {tx_id}\n\n"
+        header_info += f"Tipo Transazione: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
+        header_info += f"SegWit: {'True' if segwit else 'False'}\n\n"
+
+        text_widget = tk.Text(popup, wrap="word")
+        text_widget.insert("1.0", header_info)
+        text_widget.insert(tk.END, json_text)
+        text_widget.config(state="disabled")
+        text_widget.pack(expand=True, fill="both")
+
+    def on_closing(self):
+        if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            self.master.destroy()
+            plt.close('all') # Close all matplotlib figures
 
 def main():
-    # Main function to run the GUI
-    app = BitcoinTreeGUI()
-    app.mainloop()
-    
-    
+    root = tk.Tk()
+    gui = BitcoinTreeGUI(root)
+    root.mainloop()
 
 if __name__ == "__main__":
-    app = BitcoinTreeGUI()
-    app.mainloop()
+    main()
