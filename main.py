@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from timeit import default_timer as timer
 from datetime import timedelta
 import sys
+import BitcoinTreeGUI as gui
 
-
-__version__ = "1.0"
+__version__ = "1.5"
 __author__ = "Franco Salvucci - Acr0n1m0"
 __program_name__ = "Bitcoin Transaction Tree Builder"
 __description__ = (
@@ -112,15 +112,15 @@ def main(tx_id, altezza, ssh, testnet):
         helpers.color_print(
             f"[ALERT] Tempo impiegato per costruire l'albero: {elapsed_time}", "purple"
         )
-        # Tree Visualization
-        nx_tree = tv.build_nx_tree(tree)
-        tv.visualize_tree(nx_tree)
         if ssh:
             client.close()
             helpers.color_print("[INFO] Chiudo connessione al full-node SSH", "green")
 
-        break
+        # Tree Visualization
+        nx_tree = tv.build_nx_tree(tree)
+        tv.visualize_tree(nx_tree)
 
+        break
 
 def print_info():
     print(f"Nome: {__program_name__}")
@@ -132,21 +132,33 @@ def print_info():
 
 if __name__ == "__main__":
     # Prima parser per intercettare solo --info e --version
-    pre_parser = argparse.ArgumentParser(add_help=False,allow_abbrev=False)
+    pre_parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     pre_parser.add_argument("--info", action="store_true")
-    pre_parser.add_argument("-v", "--version", action="version", version="%(prog)s v{version}".format(version=__version__),)
-    
+    pre_parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version="%(prog)s v{version}".format(version=__version__),
+    )
+    pre_parser.add_argument(
+        "-g",
+        "--gui",
+        action="store_true",
+    )
     args, remaining_args = pre_parser.parse_known_args()
-    
+
     if args.info:
-        helpers.color_print(
-            "[INFO] Mostro le informazioni sul programma", "green"
-        )
+        helpers.color_print("[INFO] Mostro le informazioni sul programma", "green")
         print_info()
         exit(0)
-    
-    parser = argparse.ArgumentParser(description=__description__,allow_abbrev=False)
-    
+    if args.gui:
+        helpers.color_print(
+            "[INFO] Avvio l'interfaccia grafica per la costruzione dell'albero delle transazioni.",
+            "green",
+        )
+        gui.main()
+        exit(1)
+    parser = argparse.ArgumentParser(description=__description__, allow_abbrev=False)
 
     parser.add_argument(
         "-v",
@@ -179,15 +191,20 @@ if __name__ == "__main__":
         required=False,
         help="Specifica se vuoi usare la blockchain della TESTNET oppure usare la blockchain STANDARD.",
     )
+    
     # Se non ci sono argomenti, mostra errore personalizzato
     if len(sys.argv) == 1:
-        helpers.color_print("Errore: Nessun argomento fornito. Usa --help per aiuto o --info per informazioni.","red")
-        #parser.print_help()
+        helpers.color_print(
+            "Errore: Nessun argomento fornito. Usa --help per aiuto o --info per informazioni.",
+            "red",
+        )
+        # parser.print_help()
         exit(1)
-    parser.add_argument("--info", action="store_true", help="Mostra le informazioni sul programma.")
+    parser.add_argument(
+        "--info", action="store_true", help="Mostra le informazioni sul programma."
+    )
     args = parser.parse_args(remaining_args)
-    
-    
+
     if args.txid is None:
         helpers.color_print(
             "[ERROR] ID della transazione non fornito. Utilizzare l'opzione -t o --txid.",
@@ -209,6 +226,5 @@ if __name__ == "__main__":
             "[ALERT] Non è stata fornita l'opzione Testnet. Utilizzerò la blockchain standard.",
             "purple",
         )
-
     # mettere anche testnet 3
     main(args.txid, args.a, args.ssh, args.testnet)

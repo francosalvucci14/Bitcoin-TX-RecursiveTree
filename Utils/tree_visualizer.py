@@ -6,7 +6,7 @@ from io import BytesIO
 import tkinter as tk
 
 
-def add_edges(graph, node, parent=None,count=0):
+def add_edges(graph, node, parent=None, count=0):
     # if transaction.TX.isSegWit(node.root):
     if isinstance(node.root, transaction.SegWitTx):
         linewidth = 2
@@ -20,23 +20,20 @@ def add_edges(graph, node, parent=None,count=0):
     if isinstance(node.root, transaction.SegWitTx) and node.root.isCoinbase():
         linewidth = 4
         color = "orange"
-    #graph.add_node(node, label=node.root.id, color=color,linewidth=linewidth)
-    graph.add_node(node, label=count, color=color,linewidth=linewidth)
+    # graph.add_node(node, label=node.root.id, color=color,linewidth=linewidth)
+    graph.add_node(node, label=count, color=color, linewidth=linewidth)
     if parent is not None:
         graph.add_edge(node, parent)
-    
+
     for child in node.children:
-        count = count+1
-        add_edges(graph, child, node,count)
+        count = count + 1
+        add_edges(graph, child, node, count)
 
 
 def build_nx_tree(tree_root):
     graph = nx.DiGraph()
     add_edges(graph, tree_root)
     return graph
-
-
-# per visualizzare i dati JSON in un popup
 
 
 def visualize_tree(nx_tree):
@@ -79,14 +76,14 @@ def visualize_tree(nx_tree):
                         coinbase = False
                     if isinstance(node.root, transaction.SegWitTx):
                         segwit = True
-                    else:   
+                    else:
                         segwit = False
-                    show_json_popup(tx_data, node.root.id, coinbase,segwit)
+                    show_json_popup(tx_data, node.root.id, coinbase, segwit)
                 except Exception as e:
                     print(f"Errore nel parsing: {e}")
                 break
 
-    def show_json_popup(json_text, id, coinbase=False,segwit=False):
+    def show_json_popup(json_text, id, coinbase=False, segwit=False):
         popup = tk.Tk()
         popup.title("Dati Transazione")
         popup.geometry("600x500")
@@ -95,11 +92,9 @@ def visualize_tree(nx_tree):
 
         text.insert("1.0", f"ID Transazione: {id}\n\n")
         text.insert(
-                "1.0", f"Tipo Transazione: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
-            )
-        text.insert(
-                "1.0", f"SegWit: {'True' if segwit else 'False'}\n\n"
-            )
+            "1.0", f"Tipo Transazione: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
+        )
+        text.insert("1.0", f"SegWit: {'True' if segwit else 'False'}\n\n")
         text.config(state="disabled")
         text.pack(expand=True, fill="both")
         popup.mainloop()
@@ -107,7 +102,12 @@ def visualize_tree(nx_tree):
     fig.canvas.mpl_connect("button_press_event", on_click)
     plt.title("Clicca su un nodo per vedere i dettagli JSON della transazione")
     # legenda
-    legend_labels = {"red": "SegWit", "blue": "Non SegWit", "green": "Coinbase", "orange": "SegWit Coinbase"}
+    legend_labels = {
+        "red": "SegWit",
+        "blue": "Non SegWit",
+        "green": "Coinbase",
+        "orange": "SegWit Coinbase",
+    }
     legend_handles = [
         plt.Line2D(
             [0],
