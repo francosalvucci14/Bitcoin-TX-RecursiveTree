@@ -56,12 +56,12 @@ def main(tx_id, altezza, ssh, testnet):
         start = timer()
         try:
             if ssh:
-                tx = helpers.get_tx_ssh(tx_id, client)
+                tx = helpers.get_tx_tot(tx_id,True, client)
             else:
                 if testnet:
-                    tx = helpers.get_tx_testnet(tx_id)
+                    tx = helpers.get_tx_tot(tx_id,False, None, True)
                 else:
-                    tx = helpers.get_tx(tx_id)
+                    tx = helpers.get_tx_tot(tx_id,False, None, False)
 
         except Exception as e:
             helpers.color_print(
@@ -85,21 +85,11 @@ def main(tx_id, altezza, ssh, testnet):
             tx = TX.parse(tx, tx_id)
 
         # Tree Building
-        if not testnet and not ssh:
-            if altezza_noTot == True:
-                tree = tb.TreeBuilder.buildTree(tx, altezza)
-            else:
-                tree = tb.TreeBuilder.buildTree(tx)
-        if testnet:
-            if altezza_noTot == True:
-                tree = tb.TreeBuilder.buildTreeTESTNET(tx, altezza)
-            else:
-                tree = tb.TreeBuilder.buildTreeTESTNET(tx)
-        if ssh:
-            if altezza_noTot == True:
-                tree = tb.TreeBuilder.buildTreeSSH(tx, client, altezza)
-            else:
-                tree = tb.TreeBuilder.buildTreeSSH(tx, client)
+        if altezza_noTot:
+            tree = tb.TreeBuilder.buildTree(tx, altezza, ssh, testnet, None if not ssh else client)
+        else:
+            tree = tb.TreeBuilder.buildTree(tx, ssh, testnet, None if not ssh else client)
+
         helpers.color_print("[INFO] Successfully built tree", "green")
         end = timer()
         elapsed_time = timedelta(seconds=end - start)

@@ -20,42 +20,39 @@ def color_print(text: str, color: str, **kwargs):
     print(f"{colors[color]}{text}\033[0m", end=end)
 
 
-def get_tx(tx_id):
-    color_print("[MEMPOOL] Recupero la transazione con id: " + tx_id, "cyan")
-    url = "https://mempool.space/api/tx/" + tx_id + "/hex"
-    r = requests.get(url)
-    
-    if r.status_code != 200:
-        color_print("[ERROR] Transazione non trovata", "red")
-    
-    return BytesIO(bytes.fromhex(r.text))
 
+def get_tx_tot(tx_id,ssh=False,client=None,testnet=False):
+    if ssh:
+        color_print("[SSH] Recupero la transazione con id: " + tx_id, "cyan")
 
-def get_tx_testnet(tx_id):
-    color_print("[MEMPOOL-TESTNET] Recupero la transazione con id: " + tx_id, "cyan")
-    url = "https://mempool.space/testnet/api/tx/" + tx_id + "/hex"
-    r = requests.get(url)
-    
-    if r.status_code != 200:
-        color_print("[ERROR] Transazione non trovata", "red")
-    
-    return BytesIO(bytes.fromhex(r.text))
+        # Comando bitcoin-cli
+        cmd = f"/home/bitcoin-user/bin/bitcoin-cli getrawtransaction {tx_id}"
 
+        try:
+            tx_hex = client.run(cmd)
+        except subprocess.CalledProcessError as e:
+            color_print(f"[ERROR] Errore durante l'esecuzione del comando SSH: {e}", "red")
+            raise
+        return BytesIO(bytes.fromhex(tx_hex))
+    if testnet:
+        color_print("[MEMPOOL-TESTNET] Recupero la transazione con id: " + tx_id, "cyan")
+        url = "https://mempool.space/testnet/api/tx/" + tx_id + "/hex"
+        r = requests.get(url)
 
-def get_tx_ssh(tx_id, client):
-    color_print("[SSH] Recupero la transazione con id: " + tx_id, "cyan")
+        if r.status_code != 200:
+            color_print("[ERROR] Transazione non trovata", "red")
 
-    # Comando bitcoin-cli
-    cmd = f"/home/bitcoin-user/bin/bitcoin-cli getrawtransaction {tx_id}"
+        return BytesIO(bytes.fromhex(r.text))
+    if not ssh and not testnet:
+    # Versione senza SSH e senza testnet
+        color_print("[MEMPOOL] Recupero la transazione con id: " + tx_id, "cyan")
+        url = "https://mempool.space/api/tx/" + tx_id + "/hex"
+        r = requests.get(url)
 
-    try:
-        tx_hex = client.run(cmd)
-    except subprocess.CalledProcessError as e:
-        color_print(f"[ERROR] Errore durante l'esecuzione del comando SSH: {e}", "red")
-        raise
+        if r.status_code != 200:
+            color_print("[ERROR] Transazione non trovata", "red")
 
-    
-    return BytesIO(bytes.fromhex(tx_hex))
+        return BytesIO(bytes.fromhex(r.text))
 
 
 def opcodes(fname):
