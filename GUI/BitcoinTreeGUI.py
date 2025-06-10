@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import networkx as nx
 from Utils import tree_builder as tb, tree_visualizer as tv,helpers
 from transaction_total import TX, SegWitTx
@@ -97,6 +97,11 @@ class BitcoinTreeGUI:
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
+        # AGGIUNGI LA TOOLBAR DI NAVIGAZIONE QUI
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self.canvas_frame)
+        self.toolbar.update()
+        self.toolbar.pack(side=tk.BOTTOM, fill=tk.X) # Posiziona la toolbar sotto il canvas
+
         # Imposta il protocollo per la chiusura della finestra
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -143,7 +148,6 @@ class BitcoinTreeGUI:
         threading.Thread(target=self.build_tree, args=(tx_id, height_str, ssh, testnet)).start()
 
     def build_tree(self, tx_id, height_str, ssh, testnet):
-        #Logger.setup_logger()  # Initialize the logger
         try:
             altezza = int(height_str) if height_str else None
 
@@ -172,14 +176,13 @@ class BitcoinTreeGUI:
             elif not testnet: # Only if not testnet, indicate standard blockchain
                 self.log_message("[ALERT] Not using Testnet. Will use the standard blockchain.", "purple") # Alert message
 
-            #self.log_message(f"[INFO] Retrieving transaction with ID: {tx_id}", "cyan") # Info message
             if ssh:
                 self.log_message("[INFO] Retrieving transactions via SSH...", "purple") # Info message
                 tx_hex_stream = helpers.get_tx_tot(tx_id,True ,client) # Get transaction via SSH
-            if testnet:
+            elif testnet:
                 self.log_message("[INFO] Retrieving transactions from Testnet API...", "purple")
                 tx_hex_stream = helpers.get_tx_tot(tx_id,False,None,True) # Get transaction via Testnet API
-            if not ssh and not testnet:
+            else: # Default to Mempool API if neither SSH nor Testnet
                 self.log_message("[INFO] Retrieving transactions from Mempool API...", "purple")
                 tx_hex_stream = helpers.get_tx_tot(tx_id) # Get transaction via Mempool API
 
@@ -187,8 +190,6 @@ class BitcoinTreeGUI:
                 tx = SegWitTx.parse(tx_hex_stream, tx_id) # Parse as SegWit transaction
             else:
                 tx = TX.parse(tx_hex_stream, tx_id) # Parse as standard transaction
-
-            #self.log_message("[INFO] Transaction parsed successfully.", "green")
 
             tree = None
             if altezza:
@@ -226,7 +227,8 @@ class BitcoinTreeGUI:
         nx_tree = tv.build_nx_tree(tree_root) # Build NetworkX tree
         
         pos = nx.drawing.nx_agraph.graphviz_layout(nx_tree, prog="dot")
-        pos = {node: (x, -y) for node, (x, y) in pos.items()}
+        # Inverti l'asse Y per un layout più intuitivo (radice in alto)
+        pos = {node: (x, -y) for node, (x, y) in pos.items()} 
         labels = nx.get_node_attributes(nx_tree, "label")
         colors = nx.get_node_attributes(nx_tree, "color")
         border_thicknesses = nx.get_node_attributes(nx_tree, "linewidth")
@@ -269,18 +271,39 @@ class BitcoinTreeGUI:
             for color, label in legend_labels.items()
         ]
         self.ax.legend(handles=legend_handles, loc="upper right", fontsize=8)
-        self.ax.axis("off")
-        self.figure.tight_layout()
+        self.ax.axis("off") # Rimuovi gli assi per una visualizzazione più pulita
+        self.figure.tight_layout() # Adatta i margini per evitare tagli
+        self.canvas.draw() # Disegna il canvas
+
+        # >>>>>> INIZIO MODIFICA PER IL RESET CORRETTO <<<<<<
+        # Ottieni i limiti correnti degli assi dopo il disegno
+        x_min, x_max = self.ax.get_xlim()
+        y_min, y_max = self.ax.get_ylim()
+        
+        # Aggiungi un piccolo padding per non tagliare i nodi ai bordi
+        padding_x = (x_max - x_min) * 0.05 # 5% di padding
+        padding_y = (y_max - y_min) * 0.05 # 5% di padding
+
+        self.ax.set_xlim(x_min - padding_x, x_max + padding_x)
+        self.ax.set_ylim(y_min - padding_y, y_max + padding_y)
+
+        # Assicurati che Matplotlib registri questa come la vista "home"
         self.canvas.draw()
+        self.toolbar.push_current() # Forza la toolbar a salvare la vista corrente come "home"
+        # >>>>>> FINE MODIFICA PER IL RESET CORRETTO <<<<<<
+
 
         # Connect click event to the Matplotlib canvas
         def on_click(event):
             if event.inaxes != self.ax:
                 return
             click_x, click_y = event.xdata, event.ydata
+            # Considera tutti i nodi e le loro posizioni
             for node, (x, y) in pos.items():
+                # Calcola la distanza dal clic al centro del nodo
                 dist = ((click_x - x) ** 2 + (click_y - y) ** 2) ** 0.5
-                if dist < 15: # Tolerance radius
+                # Se il clic è sufficientemente vicino al nodo
+                if dist < 15: # Radius around the node to consider a click (adjust as needed)
                     try:
                         tx_data = str(node.root)
                         coinbase = node.root.isCoinbase()
