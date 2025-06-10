@@ -1,6 +1,5 @@
 from transaction_total import SegWitTx, TX
 from Utils.helpers import get_tx_tot, color_print
-
 class TreeBuilder:
 
     @classmethod
@@ -15,7 +14,7 @@ class TreeBuilder:
                     _tx_in = get_tx_tot(hex_tx,ssh,client,testnet)
                 except Exception as e:
                     color_print(
-                        f"[ERROR] Errore durante il recupero della transazione: {e}",
+                        f"[ERROR] Error while retrieving transaction: {e}",
                         "red",
                     )
                     continue
@@ -26,6 +25,7 @@ class TreeBuilder:
                 child = TreeBuilder.buildTree(tx, height - 1,ssh, testnet, client)
                 root.addChild(child)
         return root
+
 
 
 class Node:

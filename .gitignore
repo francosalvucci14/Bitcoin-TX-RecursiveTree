@@ -2,7 +2,6 @@ __pycache__/
 ProvaParamiko/
 .env
 Utils/__pycache__/
-tree.txt
-tx*.txt
+GUI/__pycache__/
 id_tx_prova.txt
-transaction_total_old.py
+logs/

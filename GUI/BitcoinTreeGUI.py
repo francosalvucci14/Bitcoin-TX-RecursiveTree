@@ -3,15 +3,16 @@ from tkinter import messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import networkx as nx
-from Utils import helpers, tree_builder as tb, tree_visualizer as tv
+from Utils import tree_builder as tb, tree_visualizer as tv,helpers
 from transaction_total import TX, SegWitTx
 from Utils.bitcoin_ssh_client import BitcoinSSHClient
 import os
 from dotenv import load_dotenv
 import threading
+from Utils.logger import log_alert, log_info, log_error, log_exception 
 
 # Program Information (from main.py for consistency)
-__version__ = "2.0.0"
+__version__ = "2.1.1"
 __author__ = "Franco Salvucci - Acr0n1m0"
 __program_name__ = "Bitcoin Transaction Tree Builder"
 __description__ = (
@@ -111,10 +112,10 @@ class BitcoinTreeGUI:
         self.log_text_widget.delete("1.0", tk.END)
         self.log_text_widget.config(state="disabled")
         self.log_message("[INFO] Displaying program information:", "green")
-        self.log_message(f"Nome: {__program_name__}", "blue") # Program Name
-        self.log_message(f"Versione: {__version__}", "blue") # Version
-        self.log_message(f"Autore: {__author__}", "blue") # Author
-        self.log_message(f"Descrizione: {__description__}", "blue") # Description
+        self.log_message(f"Name: {__program_name__}", "blue") # Program Name
+        self.log_message(f"Version: {__version__}", "blue") # Version
+        self.log_message(f"Autor: {__author__}", "blue") # Author
+        self.log_message(f"Description: {__description__}", "blue") # Description
         self.log_message(f"Github: {__url__}", "blue") # Github URL
 
     def start_build_tree_thread(self):
@@ -142,6 +143,7 @@ class BitcoinTreeGUI:
         threading.Thread(target=self.build_tree, args=(tx_id, height_str, ssh, testnet)).start()
 
     def build_tree(self, tx_id, height_str, ssh, testnet):
+        #Logger.setup_logger()  # Initialize the logger
         try:
             altezza = int(height_str) if height_str else None
 
@@ -170,28 +172,29 @@ class BitcoinTreeGUI:
             elif not testnet: # Only if not testnet, indicate standard blockchain
                 self.log_message("[ALERT] Not using Testnet. Will use the standard blockchain.", "purple") # Alert message
 
-            self.log_message(f"[INFO] Retrieving transaction with ID: {tx_id}", "cyan") # Info message
+            #self.log_message(f"[INFO] Retrieving transaction with ID: {tx_id}", "cyan") # Info message
             if ssh:
-                tx_hex_stream = helpers.get_tx_ssh(tx_id, client) # Get transaction via SSH
-            elif testnet:
-                tx_hex_stream = helpers.get_tx_testnet(tx_id) # Get transaction via Testnet API
-            else:
-                tx_hex_stream = helpers.get_tx(tx_id) # Get transaction via Mempool API
+                self.log_message("[INFO] Retrieving transactions via SSH...", "purple") # Info message
+                tx_hex_stream = helpers.get_tx_tot(tx_id,True ,client) # Get transaction via SSH
+            if testnet:
+                self.log_message("[INFO] Retrieving transactions from Testnet API...", "purple")
+                tx_hex_stream = helpers.get_tx_tot(tx_id,False,None,True) # Get transaction via Testnet API
+            if not ssh and not testnet:
+                self.log_message("[INFO] Retrieving transactions from Mempool API...", "purple")
+                tx_hex_stream = helpers.get_tx_tot(tx_id) # Get transaction via Mempool API
 
             if SegWitTx.isSegWit(tx_hex_stream): # Check if SegWit transaction
                 tx = SegWitTx.parse(tx_hex_stream, tx_id) # Parse as SegWit transaction
             else:
                 tx = TX.parse(tx_hex_stream, tx_id) # Parse as standard transaction
 
-            self.log_message("[INFO] Transaction parsed successfully.", "green")
+            #self.log_message("[INFO] Transaction parsed successfully.", "green")
 
             tree = None
-            if not testnet and not ssh:
-                tree = tb.TreeBuilder.buildTree(tx, altezza) if altezza is not None else tb.TreeBuilder.buildTree(tx) # Build tree
-            elif testnet:
-                tree = tb.TreeBuilder.buildTreeTESTNET(tx, altezza) if altezza is not None else tb.TreeBuilder.buildTreeTESTNET(tx) # Build Testnet tree
-            elif ssh:
-                tree = tb.TreeBuilder.buildTreeSSH(tx, client, altezza) if altezza is not None else tb.TreeBuilder.buildTreeSSH(tx, client) # Build SSH tree
+            if altezza:
+                tree = tb.TreeBuilder.buildTree(tx, altezza, ssh, testnet, None if not ssh else client)
+            else:
+                tree = tb.TreeBuilder.buildTree(tx, float("inf"),ssh, testnet, None if not ssh else client)
 
             self.log_message("[INFO] Tree built successfully.", "green") # Info message
             
@@ -205,8 +208,9 @@ class BitcoinTreeGUI:
             self.log_message("[INFO] Tree visualization complete.", "green")
 
         except Exception as e:
-            self.log_message(f"[ERROR] An error occurred: {e}", "red")
-            messagebox.showerror("Error", f"An error occurred: {e}")
+            self.log_message(f"[ERROR] An error occurred, see the log: {e}", "red")
+            log_exception(e) # Log the exception
+            messagebox.showerror("Error", f"An error occurred, see the log: {e}")
         finally:
             self.build_button.config(state="normal")
             self.exit_button.config(state="normal")
@@ -294,8 +298,8 @@ class BitcoinTreeGUI:
         popup.title("Transaction Data")
         popup.geometry("600x500")
 
-        header_info = f"ID Transazione: {tx_id}\n\n"
-        header_info += f"Tipo Transazione: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
+        header_info = f"Transaction ID: {tx_id}\n\n"
+        header_info += f"Transaction Type: {'Coinbase' if coinbase else 'No Coinbase'}\n\n"
         header_info += f"SegWit: {'True' if segwit else 'False'}\n\n"
 
         text_widget = tk.Text(popup, wrap="word")

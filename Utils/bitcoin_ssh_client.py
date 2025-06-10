@@ -15,7 +15,7 @@ class BitcoinSSHClient:
         output = stdout.read().decode()
         error = stderr.read().decode()
         if stderr.channel.recv_exit_status() != 0:
-            raise RuntimeError(f"Errore SSH:\n{error}")
+            raise RuntimeError(f"Error SSH:\n{error}")
         return output
 
     def close(self):

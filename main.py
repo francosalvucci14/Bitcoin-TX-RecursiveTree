@@ -8,9 +8,11 @@ from dotenv import load_dotenv
 from timeit import default_timer as timer
 from datetime import timedelta
 import sys
-import Utils.BitcoinTreeGUI as gui
+import GUI.BitcoinTreeGUI as gui
+from Utils.logger import log_info, log_alert, log_error, log_exception
 
-__version__ = "2.0.0"
+
+__version__ = "2.1.1"
 __author__ = "Franco Salvucci - Acr0n1m0"
 __program_name__ = "Bitcoin Transaction Tree Builder"
 __description__ = (
@@ -28,6 +30,9 @@ def main(tx_id, altezza, ssh, testnet):
                 "[ALERT] It is not possible to use SSH and Testnet together. I will use TESTNET.",
                 "purple",
             )
+            log_alert(
+                "[ALERT] It is not possible to use SSH and Testnet together. I will use TESTNET."
+            )
             ssh = False
             testnet = True
         if ssh:
@@ -44,11 +49,14 @@ def main(tx_id, altezza, ssh, testnet):
                     "[ERROR] Environment variables not set. Make sure you have HOST, USER and KEY_FILE.",
                     "red",
                 )
+                log_error(
+                    "[ERROR] Environment variables not set. Make sure you have HOST, USER and KEY_FILE."
+                )
                 exit(1)
             helpers.color_print(
                 "[INFO] Connecting to the Bitcoin full-node via SSH", "green"
             )
-
+            log_info("[INFO] Connecting to the Bitcoin full-node via SSH")
             client = BitcoinSSHClient(host=HOST, user=USER, key_filename=KEY_FILE)
 
         elif testnet:
@@ -67,6 +75,7 @@ def main(tx_id, altezza, ssh, testnet):
             helpers.color_print(
                 f"[ERROR] Error while retrieving transaction: {e}", "red"
             )
+            log_exception(e)
             continue
 
         # Set Tree Height
@@ -91,6 +100,7 @@ def main(tx_id, altezza, ssh, testnet):
             tree = tb.TreeBuilder.buildTree(tx, ssh, testnet, None if not ssh else client)
 
         helpers.color_print("[INFO] Successfully built tree", "green")
+        log_info("[INFO] Successfully built tree")
         end = timer()
         elapsed_time = timedelta(seconds=end - start)
         helpers.color_print(
@@ -99,7 +109,7 @@ def main(tx_id, altezza, ssh, testnet):
         if ssh:
             client.close()
             helpers.color_print("[INFO] Closing connection to full-node SSH", "green")
-
+            log_info("[INFO] Closing connection to full-node SSH")
         # Tree Visualization
         nx_tree = tv.build_nx_tree(tree)
         tv.visualize_tree(nx_tree)
