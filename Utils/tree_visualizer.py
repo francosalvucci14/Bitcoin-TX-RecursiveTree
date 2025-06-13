@@ -80,19 +80,19 @@ def visualize_tree(nx_tree):
                         segwit = False
                     show_json_popup(tx_data, node.root.id, coinbase, segwit)
                 except Exception as e:
-                    print(f"Errore nel parsing: {e}")
+                    print(f"Parsing Error: {e}")
                 break
 
     def show_json_popup(json_text, id, coinbase=False, segwit=False):
         popup = tk.Tk()
-        popup.title("Dati Transazione")
+        popup.title("Transaction Data")
         popup.geometry("600x500")
         text = tk.Text(popup, wrap="word")
         text.insert("1.0", json_text)
 
-        text.insert("1.0", f"ID Transazione: {id}\n\n")
+        text.insert("1.0", f"Transaction ID: {id}\n\n")
         text.insert(
-            "1.0", f"Tipo Transazione: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
+            "1.0", f"Transaction Type: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
         )
         text.insert("1.0", f"SegWit: {'True' if segwit else 'False'}\n\n")
         text.config(state="disabled")
@@ -100,7 +100,7 @@ def visualize_tree(nx_tree):
         popup.mainloop()
 
     fig.canvas.mpl_connect("button_press_event", on_click)
-    plt.title("Clicca su un nodo per vedere i dettagli JSON della transazione")
+    plt.title("Click on a node for see the transaction details in JSON format")
     # legenda
     legend_labels = {
         "red": "SegWit",

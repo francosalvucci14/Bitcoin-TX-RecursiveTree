@@ -3,7 +3,7 @@ from configparser import ConfigParser
 import requests
 from io import BytesIO
 import subprocess  # for SSH version
-from Utils.logger import log_alert, log_error, log_exception,log_info
+from Utils.logger import log_error, log_exception,log_info
 
 def color_print(text: str, color: str, **kwargs):
     colors = {

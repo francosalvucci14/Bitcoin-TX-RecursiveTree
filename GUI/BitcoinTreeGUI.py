@@ -9,7 +9,7 @@ from Utils.bitcoin_ssh_client import BitcoinSSHClient
 import os
 from dotenv import load_dotenv
 import threading
-from Utils.logger import log_alert, log_info, log_error, log_exception 
+from Utils.logger import log_error, log_exception ,log_info
 
 # Program Information (from main.py for consistency)
 __version__ = "2.1.1"
@@ -167,11 +167,14 @@ class BitcoinTreeGUI:
                 if not HOST or not USER or not KEY_FILE:
                     self.log_message("[ERROR] Environment variables not set for SSH. Ensure HOST, USER, and KEY_FILE are configured.", "red") # Error message
                     messagebox.showerror("SSH Error", "Environment variables for SSH are not set.")
+                    log_error("Environment variables for SSH are not set. Ensure HOST, USER, and KEY_FILE are configured.")
+                    # Re-enable buttons
                     self.build_button.config(state="normal")
                     self.exit_button.config(state="normal")
                     self.info_button.config(state="normal")
                     return
                 self.log_message("[INFO] Connecting to Bitcoin full-node via SSH", "green") # Info message
+                log_info("Connecting to Bitcoin full-node via SSH") # Log info
                 client = BitcoinSSHClient(host=HOST, user=USER, key_filename=KEY_FILE) # SSH client connection
             elif not testnet: # Only if not testnet, indicate standard blockchain
                 self.log_message("[ALERT] Not using Testnet. Will use the standard blockchain.", "purple") # Alert message
@@ -198,10 +201,12 @@ class BitcoinTreeGUI:
                 tree = tb.TreeBuilder.buildTree(tx, float("inf"),ssh, testnet, None if not ssh else client)
 
             self.log_message("[INFO] Tree built successfully.", "green") # Info message
+            log_info("Successfully built tree") # Log info
             
             if client:
                 client.close() # Close SSH client
                 self.log_message("[INFO] Closed SSH connection to full-node.", "green") # Info message
+                log_info("Closed SSH connection to full-node") # Log info
 
             # Visualize the tree
             self.log_message("[INFO] Visualizing the tree...", "blue")
@@ -249,7 +254,7 @@ class BitcoinTreeGUI:
             ax=self.ax,
         )
 
-        self.ax.set_title("Click on a node for transaction details", fontsize=10)
+        self.ax.set_title("Click on a node for see the transaction details in JSON format", fontsize=10)
         
         # Legend
         legend_labels = {

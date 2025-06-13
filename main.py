@@ -50,13 +50,13 @@ def main(tx_id, altezza, ssh, testnet):
                     "red",
                 )
                 log_error(
-                    "[ERROR] Environment variables not set. Make sure you have HOST, USER and KEY_FILE."
+                    "Environment variables not set. Make sure you have HOST, USER and KEY_FILE."
                 )
                 exit(1)
             helpers.color_print(
                 "[INFO] Connecting to the Bitcoin full-node via SSH", "green"
             )
-            log_info("[INFO] Connecting to the Bitcoin full-node via SSH")
+            log_info("Connecting to the Bitcoin full-node via SSH")
             client = BitcoinSSHClient(host=HOST, user=USER, key_filename=KEY_FILE)
 
         elif testnet:
@@ -100,7 +100,7 @@ def main(tx_id, altezza, ssh, testnet):
             tree = tb.TreeBuilder.buildTree(tx, ssh, testnet, None if not ssh else client)
 
         helpers.color_print("[INFO] Successfully built tree", "green")
-        log_info("[INFO] Successfully built tree")
+        log_info("Successfully built tree")
         end = timer()
         elapsed_time = timedelta(seconds=end - start)
         helpers.color_print(
@@ -109,7 +109,7 @@ def main(tx_id, altezza, ssh, testnet):
         if ssh:
             client.close()
             helpers.color_print("[INFO] Closing connection to full-node SSH", "green")
-            log_info("[INFO] Closing connection to full-node SSH")
+            log_info("Closing connection to full-node SSH")
         # Tree Visualization
         nx_tree = tv.build_nx_tree(tree)
         tv.visualize_tree(nx_tree)
@@ -150,6 +150,7 @@ if __name__ == "__main__":
             "[INFO] Starting the graphical interface for building the transaction tree.",
             "green",
         )
+        log_info("Starting the graphical interface for building the transaction tree.")
         gui.main()
         exit(1)
     parser = argparse.ArgumentParser(description=__description__, allow_abbrev=False)
