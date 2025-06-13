@@ -131,13 +131,15 @@ class BitcoinTreeGUI:
 
         if not tx_id:
             messagebox.showerror("Input Error", "Transaction ID cannot be empty.")
+            log_error("Transaction ID cannot be empty.")
+            self.log_message("[ERROR] Transaction ID cannot be empty.", "red")
             return
 
         self.clear_plot()
         self.log_text_widget.config(state="normal")
         self.log_text_widget.delete("1.0", tk.END)
         self.log_text_widget.config(state="disabled")
-        self.log_message("[INFO] Starting tree building process...", "blue")
+        self.log_message("[INFO] Starting tree building process...", "green")
         
         # Disable buttons during processing
         self.build_button.config(state="disabled")
@@ -146,7 +148,7 @@ class BitcoinTreeGUI:
 
         # Use a thread for the long-running operation
         threading.Thread(target=self.build_tree, args=(tx_id, height_str, ssh, testnet)).start()
-
+        
     def build_tree(self, tx_id, height_str, ssh, testnet):
         try:
             altezza = int(height_str) if height_str else None
@@ -180,13 +182,13 @@ class BitcoinTreeGUI:
                 self.log_message("[ALERT] Not using Testnet. Will use the standard blockchain.", "purple") # Alert message
 
             if ssh:
-                self.log_message("[INFO] Retrieving transactions via SSH...", "purple") # Info message
+                self.log_message("[INFO] Retrieving transactions via SSH...", "green") # Info message
                 tx_hex_stream = helpers.get_tx_tot(tx_id,True ,client) # Get transaction via SSH
             elif testnet:
-                self.log_message("[INFO] Retrieving transactions from Testnet API...", "purple")
+                self.log_message("[INFO] Retrieving transactions from Testnet API...", "green")
                 tx_hex_stream = helpers.get_tx_tot(tx_id,False,None,True) # Get transaction via Testnet API
             else: # Default to Mempool API if neither SSH nor Testnet
-                self.log_message("[INFO] Retrieving transactions from Mempool API...", "purple")
+                self.log_message("[INFO] Retrieving transactions from Mempool API...", "green")
                 tx_hex_stream = helpers.get_tx_tot(tx_id) # Get transaction via Mempool API
 
             if SegWitTx.isSegWit(tx_hex_stream): # Check if SegWit transaction
@@ -209,9 +211,9 @@ class BitcoinTreeGUI:
                 log_info("Closed SSH connection to full-node") # Log info
 
             # Visualize the tree
-            self.log_message("[INFO] Visualizing the tree...", "blue")
+            #self.log_message("[INFO] Visualizing the tree...", "blue")
             self.display_tree(tree) # Display the generated tree
-            self.log_message("[INFO] Tree visualization complete.", "green")
+            #self.log_message("[INFO] Tree visualization complete.", "green")
 
         except Exception as e:
             self.log_message(f"[ERROR] An error occurred, see the log: {e}", "red")

@@ -11,6 +11,7 @@ class TreeBuilder:
             for txh_in in root_tx.getInputs():
                 hex_tx = (txh_in.prevtx).hex()
                 try:
+                    
                     _tx_in = get_tx_tot(hex_tx,ssh,client,testnet)
                 except Exception as e:
                     color_print(

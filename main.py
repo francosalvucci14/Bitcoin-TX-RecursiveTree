@@ -198,12 +198,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(remaining_args)
 
-    if args.txid is None:
-        helpers.color_print(
-            "[ERROR] Transaction ID not provided. Use -t or --txid option.",
-            "red",
-        )
-        exit(1)
+    
     if args.a is None:
         helpers.color_print(
             "[ALERT] Height not provided. The entire transaction history will be calculated",
