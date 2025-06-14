@@ -185,7 +185,8 @@ class BitcoinTreeGUI:
     def build_tree(self, tx_id, height_str, ssh, testnet):
         try:
             altezza = int(height_str) if height_str else None
-
+            if not altezza:
+                self.log_message("[ALERT] Height not provided. The entire transaction history will be calculated", "purple")  # Alert message
             # Handle SSH and Testnet conflict
             if ssh and testnet:
                 self.log_message(
@@ -264,6 +265,7 @@ class BitcoinTreeGUI:
                     tx, altezza, ssh, testnet, None if not ssh else client
                 )
             else:
+                
                 tree = tb.TreeBuilder.buildTree(
                     tx, float("inf"), ssh, testnet, None if not ssh else client
                 )
