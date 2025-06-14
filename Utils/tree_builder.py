@@ -6,16 +6,17 @@ class TreeBuilder:
 
     @classmethod
     def buildTree(
-        cls, root_tx, height=float("inf"), ssh=False, testnet=False, client=None
+        cls, root_tx, height, ssh=False, testnet=False, client=None
     ):
         root = Node(root_tx)
         if root_tx.isCoinbase():
             return root
         if height > 0:
             for txh_in in root_tx.getInputs():
+                
                 hex_tx = (txh_in.prevtx).hex()
                 try:
-
+                    
                     _tx_in = get_tx_tot(hex_tx, ssh, client, testnet)
                 except Exception as e:
                     color_print(

@@ -4,21 +4,21 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import networkx as nx
 from Utils import tree_builder as tb, tree_visualizer as tv, helpers
-from transaction_total import TX, SegWitTx
+from Utils.logger import log_error, log_exception, log_info, log_alert
 from Utils.bitcoin_ssh_client import BitcoinSSHClient
+from transaction_total import TX, SegWitTx
 import os
 from dotenv import load_dotenv
 import threading
-from Utils.logger import log_error, log_exception, log_info
+from main import __version__, __author__, __program_name__, __description__, __url__
 
-# Program Information (from main.py for consistency)
-__version__ = "2.1.1"
-__author__ = "Franco Salvucci - Acr0n1m0"
-__program_name__ = "Bitcoin Transaction Tree Builder"
-__description__ = (
-    "Script per costruire e visualizzare l'albero delle transazioni Bitcoin."
-)
-__url__ = "https://github.com/francosalvucci14/Bitcoin-TX-RecursiveTree"
+# __version__ = "2.1.1"
+# __author__ = "Franco Salvucci - Acr0n1m0"
+# __program_name__ = "Bitcoin Transaction Tree Builder"
+# __description__ = (
+#     "Script per costruire e visualizzare l'albero delle transazioni Bitcoin."
+# )
+# __url__ = "https://github.com/francosalvucci14/Bitcoin-TX-RecursiveTree"
 
 
 class BitcoinTreeGUI:
@@ -30,6 +30,7 @@ class BitcoinTreeGUI:
         self.log_text_widget = None  # Initialize to None
 
         self.create_widgets()
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_widgets(self):
         # Input Frame - Contiene tutti gli input e i bottoni di controllo
@@ -133,9 +134,6 @@ class BitcoinTreeGUI:
             side=tk.BOTTOM, fill=tk.X
         )  # Posiziona la toolbar sotto il canvas
 
-        # Imposta il protocollo per la chiusura della finestra
-        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
-
     def log_message(self, message, color="black"):
         if self.log_text_widget:
             self.log_text_widget.config(state="normal")
@@ -159,6 +157,7 @@ class BitcoinTreeGUI:
         height_str = self.height_entry.get().strip()
         ssh = self.ssh_var.get()
         testnet = self.testnet_var.get()
+        # self.stop_button.config(state="normal")  # Abilita il pulsante annulla
 
         if not tx_id:
             messagebox.showerror("Input Error", "Transaction ID cannot be empty.")
@@ -174,19 +173,23 @@ class BitcoinTreeGUI:
 
         # Disable buttons during processing
         self.build_button.config(state="disabled")
-        self.exit_button.config(state="disabled")
         self.info_button.config(state="disabled")
 
         # Use a thread for the long-running operation
-        threading.Thread(
+        thread = threading.Thread(
             target=self.build_tree, args=(tx_id, height_str, ssh, testnet)
-        ).start()
+        )
+        thread.daemon = True  # Allow thread to exit when the main program exits
+        thread.start()  # Start the thread
 
     def build_tree(self, tx_id, height_str, ssh, testnet):
         try:
             altezza = int(height_str) if height_str else None
             if not altezza:
-                self.log_message("[ALERT] Height not provided. The entire transaction history will be calculated", "purple")  # Alert message
+                self.log_message(
+                    "[ALERT] Height not provided. The entire transaction history will be calculated",
+                    "purple",
+                )  # Alert message
             # Handle SSH and Testnet conflict
             if ssh and testnet:
                 self.log_message(
@@ -265,9 +268,9 @@ class BitcoinTreeGUI:
                     tx, altezza, ssh, testnet, None if not ssh else client
                 )
             else:
-                
+                altezza = float("inf")  # Set to infinity if height not specified
                 tree = tb.TreeBuilder.buildTree(
-                    tx, float("inf"), ssh, testnet, None if not ssh else client
+                    tx, altezza, ssh, testnet, None if not ssh else client
                 )
 
             self.log_message("[INFO] Tree built successfully.", "green")  # Info message
@@ -421,6 +424,7 @@ class BitcoinTreeGUI:
 def main():
     root = tk.Tk()
     gui = BitcoinTreeGUI(root)
+
     root.mainloop()
 
 
