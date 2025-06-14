@@ -4,6 +4,39 @@ import matplotlib.pyplot as plt
 import matplotlib
 from io import BytesIO
 import tkinter as tk
+import uuid
+
+def add_edges2(graph, node, parent_uid=None, node_to_uid=None):
+    if node_to_uid is None:
+        node_to_uid = {}
+
+    uid = str(uuid.uuid4())  # UID univoco come stringa
+    node_to_uid[node] = uid
+
+    # Definizione del colore e dello spessore del bordo
+    if isinstance(node.root, transaction.SegWitTx):
+        linewidth = 2
+        color = "red"
+    else:
+        linewidth = 1
+        color = "blue"
+    if node.root.isCoinbase():
+        linewidth = 3.5
+        color = "green"
+    if isinstance(node.root, transaction.SegWitTx) and node.root.isCoinbase():
+        linewidth = 4
+        color = "orange"
+
+    # Aggiungi il nodo con ID univoco
+    graph.add_node(node, label=uid[:8], color=color, linewidth=linewidth)
+
+    # Aggiungi l'arco verso il genitore se esiste
+    if parent_uid is not None:
+        graph.add_edge(node, parent_uid)
+
+    # Ricorsione per i figli
+    for child in node.children:
+        add_edges2(graph, child, node, node_to_uid)
 
 
 def add_edges(graph, node, parent=None, count=0):
@@ -26,13 +59,13 @@ def add_edges(graph, node, parent=None, count=0):
         graph.add_edge(node, parent)
 
     for child in node.children:
-        count = count + 1
+        count += 1
         add_edges(graph, child, node, count)
 
 
 def build_nx_tree(tree_root):
     graph = nx.DiGraph()
-    add_edges(graph, tree_root)
+    add_edges2(graph, tree_root)
     return graph
 
 
@@ -78,12 +111,13 @@ def visualize_tree(nx_tree):
                         segwit = True
                     else:
                         segwit = False
-                    show_json_popup(tx_data, node.root.id, coinbase, segwit)
+                    #print(f"Clicked on node: {labels[node]} with ID: {node.root.id}")
+                    show_json_popup(tx_data, node.root.id,labels[node], coinbase, segwit)
                 except Exception as e:
                     print(f"Parsing Error: {e}")
                 break
 
-    def show_json_popup(json_text, id, coinbase=False, segwit=False):
+    def show_json_popup(json_text, id,node_uuid, coinbase=False, segwit=False):
         popup = tk.Tk()
         popup.title("Transaction Data")
         popup.geometry("600x500")
@@ -94,6 +128,7 @@ def visualize_tree(nx_tree):
         text.insert(
             "1.0", f"Transaction Type: {'Coinbase' if coinbase else 'Non Coinbase'}\n\n"
         )
+        text.insert("1.0", f"Node UUID: {node_uuid}\n\n")
         text.insert("1.0", f"SegWit: {'True' if segwit else 'False'}\n\n")
         text.config(state="disabled")
         text.pack(expand=True, fill="both")

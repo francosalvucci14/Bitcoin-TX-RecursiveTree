@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 import threading
 from main import __version__, __author__, __program_name__, __description__, __url__
 
+
 class BitcoinTreeGUI:
     def __init__(self, master):
         self.master = master
@@ -148,7 +149,6 @@ class BitcoinTreeGUI:
         height_str = self.height_entry.get().strip()
         ssh = self.ssh_var.get()
         testnet = self.testnet_var.get()
-        # self.stop_button.config(state="normal")  # Abilita il pulsante annulla
 
         if not tx_id:
             messagebox.showerror("Input Error", "Transaction ID cannot be empty.")
@@ -230,23 +230,17 @@ class BitcoinTreeGUI:
                 self.log_message(
                     "[INFO] Retrieving transactions via SSH...", "green"
                 )  # Info message
-                tx_hex_stream = helpers.get_tx_tot(
-                    tx_id, True, client
-                )  # Get transaction via SSH
             elif testnet:
                 self.log_message(
                     "[INFO] Retrieving transactions from Testnet API...", "green"
                 )
-                tx_hex_stream = helpers.get_tx_tot(
-                    tx_id, False, None, True
-                )  # Get transaction via Testnet API
             else:  # Default to Mempool API if neither SSH nor Testnet
                 self.log_message(
                     "[INFO] Retrieving transactions from Mempool API...", "green"
                 )
-                tx_hex_stream = helpers.get_tx_tot(
-                    tx_id
-                )  # Get transaction via Mempool API
+            tx_hex_stream = helpers.get_tx_tot(
+                tx_id, ssh, client if ssh else None, testnet, log_func=self.log_message,gui=True
+            )  # Get transaction via Mempool API
 
             if SegWitTx.isSegWit(tx_hex_stream):  # Check if SegWit transaction
                 tx = SegWitTx.parse(tx_hex_stream, tx_id)  # Parse as SegWit transaction
@@ -256,12 +250,24 @@ class BitcoinTreeGUI:
             tree = None
             if altezza:
                 tree = tb.TreeBuilder.buildTree(
-                    tx, altezza, ssh, testnet, None if not ssh else client
+                    tx,
+                    altezza,
+                    ssh,
+                    testnet,
+                    None if not ssh else client,
+                    log_func=self.log_message,
+                    gui=True
                 )
             else:
                 altezza = float("inf")  # Set to infinity if height not specified
                 tree = tb.TreeBuilder.buildTree(
-                    tx, altezza, ssh, testnet, None if not ssh else client
+                    tx,
+                    altezza,
+                    ssh,
+                    testnet,
+                    None if not ssh else client,
+                    log_func=self.log_message,
+                    gui=True
                 )
 
             self.log_message("[INFO] Tree built successfully.", "green")  # Info message
@@ -382,14 +388,23 @@ class BitcoinTreeGUI:
                         tx_data = str(node.root)
                         coinbase = node.root.isCoinbase()
                         segwit = isinstance(node.root, SegWitTx)
-                        self.show_json_popup(tx_data, node.root.id, coinbase, segwit)
+                        node_uuid = labels[node]
+                        self.log_message(
+                            f"[ALERT] Clicked on node: {node_uuid} with TXID: {node.root.id}",
+                            "purple",
+                        )  # Log the clicked node
+                        self.show_json_popup(
+                            tx_data, node.root.id, node_uuid, coinbase, segwit
+                        )
                     except Exception as e:
                         self.log_message(f"Error parsing transaction data: {e}", "red")
                     break
 
         self.figure.canvas.mpl_connect("button_press_event", on_click)
 
-    def show_json_popup(self, json_text, tx_id, coinbase=False, segwit=False):
+    def show_json_popup(
+        self, json_text, tx_id, node_uuid, coinbase=False, segwit=False
+    ):
         popup = tk.Toplevel(self.master)
         popup.title("Transaction Data")
         popup.geometry("600x500")
@@ -399,6 +414,7 @@ class BitcoinTreeGUI:
             f"Transaction Type: {'Coinbase' if coinbase else 'No Coinbase'}\n\n"
         )
         header_info += f"SegWit: {'True' if segwit else 'False'}\n\n"
+        header_info += f"Node UUID: {node_uuid}\n\n"
 
         text_widget = tk.Text(popup, wrap="word")
         text_widget.insert("1.0", header_info)

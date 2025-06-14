@@ -12,14 +12,14 @@ import GUI.BitcoinTreeGUI as gui
 from Utils.logger import log_info, log_alert, log_error, log_exception
 
 
-__version__ = "2.1.1"
+__version__ = "2.2.1"
 __author__ = "Franco Salvucci - Acr0n1m0"
 __program_name__ = "Bitcoin Transaction Tree Builder"
 __description__ = "Script to build and display Bitcoin transaction tree."
 __url__ = "https://github.com/francosalvucci14/Bitcoin-TX-RecursiveTree"
 
 
-def main(tx_id, altezza, ssh, testnet):
+def main_proc(tx_id, altezza, ssh, testnet):
 
     while True:
         # Transaction Retrieval
@@ -61,13 +61,7 @@ def main(tx_id, altezza, ssh, testnet):
             ssh = False
         start = timer()
         try:
-            if ssh:
-                tx = helpers.get_tx_tot(tx_id, True, client)
-            else:
-                if testnet:
-                    tx = helpers.get_tx_tot(tx_id, False, None, True)
-                else:
-                    tx = helpers.get_tx_tot(tx_id, False, None, False)
+            tx = helpers.get_tx_tot(tx_id, ssh, None if not ssh else client, testnet)
 
         except Exception as e:
             helpers.color_print(
@@ -155,6 +149,7 @@ if __name__ == "__main__":
         )
         log_info("Starting the graphical interface for building the transaction tree.")
         gui.main()
+        
         exit(1)
     parser = argparse.ArgumentParser(description=__description__, allow_abbrev=False)
 
@@ -214,4 +209,4 @@ if __name__ == "__main__":
             "purple",
         )
     # mettere anche testnet 3
-    main(args.txid, args.a, args.ssh, args.testnet)
+    main_proc(args.txid, args.a, args.ssh, args.testnet)

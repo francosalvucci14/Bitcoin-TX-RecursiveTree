@@ -21,9 +21,15 @@ def color_print(text: str, color: str, **kwargs):
     print(f"{colors[color]}{text}\033[0m", end=end)
 
 
-def get_tx_tot(tx_id, ssh=False, client=None, testnet=False):
+def get_tx_tot(tx_id, ssh=False, client=None, testnet=False,log_func=None,gui=False):
     if ssh:
-        color_print("[SSH] Retrieve transaction with id: " + tx_id, "cyan")
+        if not gui: 
+            color_print("[SSH] Retrieve transaction with id: " + tx_id, "cyan")
+        else:
+            if log_func:
+                log_func(
+                    f"[SSH] Retrieving transaction {tx_id}","blue"
+                )
         log_info(f"Retrieving transaction {tx_id} via SSH")
         # Comando bitcoin-cli
         cmd = f"/home/bitcoin-user/bin/bitcoin-cli getrawtransaction {tx_id}"
@@ -31,30 +37,45 @@ def get_tx_tot(tx_id, ssh=False, client=None, testnet=False):
         try:
             tx_hex = client.run(cmd)
         except subprocess.CalledProcessError as e:
-            color_print(f"[ERROR] Error executing SSH command: {e}", "red")
+            if not gui: 
+                color_print(f"[ERROR] Error executing SSH command: {e}", "red")
             log_exception(e)
             raise
         return BytesIO(bytes.fromhex(tx_hex))
     if testnet:
         log_info(f"Retrieving transaction {tx_id} via Mempool Testnet API")
-        color_print("[MEMPOOL-TESTNET] Retrieve transaction with id: " + tx_id, "cyan")
+        if not gui: 
+            color_print("[MEMPOOL-TESTNET] Retrieve transaction with id: " + tx_id, "cyan")
+        else:
+            if log_func:
+                log_func(
+                    f"[MEMPOOL-TESTNET] Retrieving transaction {tx_id}","blue"
+                )
         url = "https://mempool.space/testnet/api/tx/" + tx_id + "/hex"
         r = requests.get(url)
 
         if r.status_code != 200:
-            color_print("[ERROR] Transaction not found", "red")
+            if not gui: 
+                color_print("[ERROR] Transaction not found", "red")
             log_error(f"Transaction {tx_id} not found in mempool testnet")
 
         return BytesIO(bytes.fromhex(r.text))
     if not ssh and not testnet:
         # Versione senza SSH e senza testnet
         log_info(f"Retrieving transaction {tx_id} via Mempool API")
-        color_print("[MEMPOOL] Retrieve transaction with id: " + tx_id, "cyan")
+        if not gui:
+            color_print("[MEMPOOL] Retrieve transaction with id: " + tx_id, "cyan")
+        else:
+            if log_func:
+                log_func(
+                    f"[MEMPOOL] Retrieving transaction {tx_id}","blue"
+                )
         url = "https://mempool.space/api/tx/" + tx_id + "/hex"
         r = requests.get(url)
 
         if r.status_code != 200:
-            color_print("[ERROR] Transaction not found", "red")
+            if not gui: 
+                color_print("[ERROR] Transaction not found", "red")
             log_error(f"Transaction {tx_id} not found in mempool")
 
         return BytesIO(bytes.fromhex(r.text))
