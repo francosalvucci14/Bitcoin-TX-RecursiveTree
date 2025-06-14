@@ -12,15 +12,6 @@ from dotenv import load_dotenv
 import threading
 from main import __version__, __author__, __program_name__, __description__, __url__
 
-# __version__ = "2.1.1"
-# __author__ = "Franco Salvucci - Acr0n1m0"
-# __program_name__ = "Bitcoin Transaction Tree Builder"
-# __description__ = (
-#     "Script per costruire e visualizzare l'albero delle transazioni Bitcoin."
-# )
-# __url__ = "https://github.com/francosalvucci14/Bitcoin-TX-RecursiveTree"
-
-
 class BitcoinTreeGUI:
     def __init__(self, master):
         self.master = master
