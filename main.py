@@ -15,9 +15,7 @@ from Utils.logger import log_info, log_alert, log_error, log_exception
 __version__ = "2.1.1"
 __author__ = "Franco Salvucci - Acr0n1m0"
 __program_name__ = "Bitcoin Transaction Tree Builder"
-__description__ = (
-    "Script to build and display Bitcoin transaction tree."
-)
+__description__ = "Script to build and display Bitcoin transaction tree."
 __url__ = "https://github.com/francosalvucci14/Bitcoin-TX-RecursiveTree"
 
 
@@ -64,12 +62,12 @@ def main(tx_id, altezza, ssh, testnet):
         start = timer()
         try:
             if ssh:
-                tx = helpers.get_tx_tot(tx_id,True, client)
+                tx = helpers.get_tx_tot(tx_id, True, client)
             else:
                 if testnet:
-                    tx = helpers.get_tx_tot(tx_id,False, None, True)
+                    tx = helpers.get_tx_tot(tx_id, False, None, True)
                 else:
-                    tx = helpers.get_tx_tot(tx_id,False, None, False)
+                    tx = helpers.get_tx_tot(tx_id, False, None, False)
 
         except Exception as e:
             helpers.color_print(
@@ -81,9 +79,9 @@ def main(tx_id, altezza, ssh, testnet):
         # Set Tree Height
         if altezza is not None:
             altezza = int(altezza)
-            altezza_noTot = True
+            altezza_Tot = False
         else:
-            altezza_noTot = False
+            altezza_Tot = True
 
         # Transaction Parsing
         if SegWitTx.isSegWit(tx):
@@ -94,10 +92,14 @@ def main(tx_id, altezza, ssh, testnet):
             tx = TX.parse(tx, tx_id)
 
         # Tree Building
-        if altezza_noTot:
-            tree = tb.TreeBuilder.buildTree(tx, altezza, ssh, testnet, None if not ssh else client)
+        if not altezza_Tot:
+            tree = tb.TreeBuilder.buildTree(
+                tx, altezza, ssh, testnet, None if not ssh else client
+            )
         else:
-            tree = tb.TreeBuilder.buildTree(tx, ssh, testnet, None if not ssh else client)
+            tree = tb.TreeBuilder.buildTree(
+                tx, float("inf"), ssh, testnet, None if not ssh else client
+            )
 
         helpers.color_print("[INFO] Successfully built tree", "green")
         log_info("Successfully built tree")
@@ -116,6 +118,7 @@ def main(tx_id, altezza, ssh, testnet):
 
         break
 
+
 def print_info():
     print(f"Name: {__program_name__}")
     print(f"Version: {__version__}")
@@ -127,7 +130,7 @@ def print_info():
 if __name__ == "__main__":
     # Prima parser per intercettare solo --info e --version
     pre_parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
-    pre_parser.add_argument("-i","--info", action="store_true")
+    pre_parser.add_argument("-i", "--info", action="store_true")
     pre_parser.add_argument(
         "-v",
         "--version",
@@ -155,7 +158,6 @@ if __name__ == "__main__":
         exit(1)
     parser = argparse.ArgumentParser(description=__description__, allow_abbrev=False)
 
-
     parser.add_argument(
         "-t",
         "--txid",
@@ -181,7 +183,7 @@ if __name__ == "__main__":
         required=False,
         help="Specify whether you want to use the TESTNET blockchain or use the STANDARD blockchain.",
     )
-    
+
     # Se non ci sono argomenti, mostra errore personalizzato
     if len(sys.argv) == 1:
         helpers.color_print(
@@ -191,14 +193,11 @@ if __name__ == "__main__":
         # parser.print_help()
         exit(1)
     parser.add_argument(
-        "-i","--info", action="store_true", help="Show the program info."
+        "-i", "--info", action="store_true", help="Show the program info."
     )
-    parser.add_argument(
-        "-g","--gui", action="store_true", help="Start the GUI."
-    )
+    parser.add_argument("-g", "--gui", action="store_true", help="Start the GUI.")
     args = parser.parse_args(remaining_args)
 
-    
     if args.a is None:
         helpers.color_print(
             "[ALERT] Height not provided. The entire transaction history will be calculated",

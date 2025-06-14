@@ -3,7 +3,8 @@ from configparser import ConfigParser
 import requests
 from io import BytesIO
 import subprocess  # for SSH version
-from Utils.logger import log_error, log_exception,log_info
+from Utils.logger import log_error, log_exception, log_info
+
 
 def color_print(text: str, color: str, **kwargs):
     colors = {
@@ -20,7 +21,7 @@ def color_print(text: str, color: str, **kwargs):
     print(f"{colors[color]}{text}\033[0m", end=end)
 
 
-def get_tx_tot(tx_id,ssh=False,client=None,testnet=False):
+def get_tx_tot(tx_id, ssh=False, client=None, testnet=False):
     if ssh:
         color_print("[SSH] Retrieve transaction with id: " + tx_id, "cyan")
         log_info(f"Retrieving transaction {tx_id} via SSH")
@@ -46,7 +47,7 @@ def get_tx_tot(tx_id,ssh=False,client=None,testnet=False):
 
         return BytesIO(bytes.fromhex(r.text))
     if not ssh and not testnet:
-    # Versione senza SSH e senza testnet
+        # Versione senza SSH e senza testnet
         log_info(f"Retrieving transaction {tx_id} via Mempool API")
         color_print("[MEMPOOL] Retrieve transaction with id: " + tx_id, "cyan")
         url = "https://mempool.space/api/tx/" + tx_id + "/hex"
@@ -63,7 +64,7 @@ def opcodes(fname):
 
     config = ConfigParser()
     config.read(fname)
-    
+
     return {int(config["OPCODES"][x], 16): x for x in config["OPCODES"]}
 
 
