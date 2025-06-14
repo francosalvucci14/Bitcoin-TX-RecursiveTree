@@ -239,7 +239,12 @@ class BitcoinTreeGUI:
                     "[INFO] Retrieving transactions from Mempool API...", "green"
                 )
             tx_hex_stream = helpers.get_tx_tot(
-                tx_id, ssh, client if ssh else None, testnet, log_func=self.log_message,gui=True
+                tx_id,
+                ssh,
+                client if ssh else None,
+                testnet,
+                log_func=self.log_message,
+                gui=True,
             )  # Get transaction via Mempool API
 
             if SegWitTx.isSegWit(tx_hex_stream):  # Check if SegWit transaction
@@ -256,7 +261,7 @@ class BitcoinTreeGUI:
                     testnet,
                     None if not ssh else client,
                     log_func=self.log_message,
-                    gui=True
+                    gui=True,
                 )
             else:
                 altezza = float("inf")  # Set to infinity if height not specified
@@ -267,7 +272,7 @@ class BitcoinTreeGUI:
                     testnet,
                     None if not ssh else client,
                     log_func=self.log_message,
-                    gui=True
+                    gui=True,
                 )
 
             self.log_message("[INFO] Tree built successfully.", "green")  # Info message

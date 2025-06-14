@@ -79,10 +79,8 @@ def main_proc(tx_id, altezza, ssh, testnet):
 
         # Transaction Parsing
         if SegWitTx.isSegWit(tx):
-
             tx = SegWitTx.parse(tx, tx_id)
         else:
-
             tx = TX.parse(tx, tx_id)
 
         # Tree Building
@@ -149,7 +147,7 @@ if __name__ == "__main__":
         )
         log_info("Starting the graphical interface for building the transaction tree.")
         gui.main()
-        
+
         exit(1)
     parser = argparse.ArgumentParser(description=__description__, allow_abbrev=False)
 
