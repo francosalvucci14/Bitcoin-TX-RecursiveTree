@@ -56,14 +56,13 @@ Parametri:
 - **main.py**: punto di ingresso del programma. Gestisce il parsing degli argomenti, la connessione alla rete, la costruzione e visualizzazione dell’albero.
 - **transaction_total.py**: definisce le classi TX e SegWitTx per il parsing delle transazioni Bitcoin
 - **Utils/**: contiene i moduli di supporto:
-    - **bitcoin_ssh_client.py**: Interfaccia per connettersi tramite SSH, usa Paramiko
     - **helpers.py**: funzioni comuni come get_tx, get_tx_ssh, color_print, ecc..  
     - **tree_builder.py**: costruzione dell’albero delle transazioni 
     - **tree_visualizer.py**: visualizzazione del grafo delle transazioni con NetworkX e MatplotLib.   
-    - **bitcoin_ssh_client.py**: gestisce la connessione a un full-node tramite SSH
+    - **bitcoin_ssh_client.py**: gestisce la connessione a un full-node tramite SSH tramite Paramiko
     - **logger.py**: crea e gestisce il file di log
 - **GUI/**: Contiene tutti i file relativi alla GUI
-- **logs/**: Contiele il file di log
+- **logs/**: Contiene il file di log
 
 ## Output
 
