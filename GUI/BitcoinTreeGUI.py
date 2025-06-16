@@ -431,6 +431,10 @@ class BitcoinTreeGUI:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             self.master.destroy()
             plt.close("all")  # Close all matplotlib figures
+            helpers.color_print(
+                "[INFO] Application closed successfully.", "green"
+            )
+            log_info("Application closed successfully")
 
 
 def main():
