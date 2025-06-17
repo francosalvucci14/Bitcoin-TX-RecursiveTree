@@ -75,9 +75,9 @@ Bitcoin_Transaction_Tree_Visualizer/
 │   ├── bitcoin_ssh_client.py
 │   └── logger.py
 ├── GUI/                      # Contiene il file per la gestione della GUI
-│   └── Bitcoin_Tree_Gui_Clean.py
+│   └── Bitcoin_Tree_Gui.py
 ├── logs/
-│   └── log.txt
+│   └── BitcoinTree_{DATE}.log
 ├── .env                      # Per le variabili SSH
 └── requirements.txt          # Requisiti
 ```
@@ -172,9 +172,9 @@ Bitcoin_Transaction_Tree_Visualizer/
 │   ├── bitcoin_ssh_client.py
 │   └── logger.py
 ├── GUI/                      # Contains the GUI file
-│   └── Bitcoin_Tree_Gui_Clean.py
+│   └── Bitcoin_Tree_Gui.py
 ├── logs/
-│   └── log.txt
+│   └── BitcoinTree_{DATE}.log
 ├── .env                      # For SSH variables
 └── requirements.txt         
 ```
