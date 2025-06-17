@@ -53,7 +53,7 @@ Parametri:
 
 ## Struttura del progetto
 
-- **main.py**: punto di ingresso del programma. Gestisce il parsing degli argomenti, la connessione alla rete, la costruzione e visualizzazione dell’albero.
+<!-- - **main.py**: punto di ingresso del programma. Gestisce il parsing degli argomenti, la connessione alla rete, la costruzione e visualizzazione dell’albero.
 - **transaction_total.py**: definisce le classi TX e SegWitTx per il parsing delle transazioni Bitcoin
 - **Utils/**: contiene i moduli di supporto:
     - **helpers.py**: funzioni comuni come get_tx, get_tx_ssh, color_print, ecc..  
@@ -62,7 +62,25 @@ Parametri:
     - **bitcoin_ssh_client.py**: gestisce la connessione a un full-node tramite SSH tramite Paramiko
     - **logger.py**: crea e gestisce il file di log
 - **GUI/**: Contiene tutti i file relativi alla GUI
-- **logs/**: Contiene il file di log
+- **logs/**: Contiene il file di log -->
+
+```
+Bitcoin_Transaction_Tree_Visualizer/
+├── main.py                   # Ingresso principale CLI/GUI
+├── transaction_total.py      # Parser TX e SegWitTX
+├── Utils/                    # Contiene i moduli di supporto
+│   ├── helpers.py
+│   ├── tree_builder.py
+│   ├── tree_visualizer.py
+│   ├── bitcoin_ssh_client.py
+│   └── logger.py
+├── GUI/                      # Contiene il file per la gestione della GUI
+│   └── Bitcoin_Tree_Gui_Clean.py
+├── logs/
+│   └── log.txt
+├── .env                      # Per le variabili SSH
+└── requirements.txt          # Requisiti
+```
 
 ## Output
 
@@ -132,7 +150,7 @@ python main.py -t <txid> [-a <height>] [--ssh] [--testnet] [-g/--gui]
 
 The project is organized as follows:
 
-- **main.py**: The main entry point of the program. It handles argument parsing, network connection, tree building, and visualization.
+<!-- - **main.py**: The main entry point of the program. It handles argument parsing, network connection, tree building, and visualization.
 - **transaction_total.py**: Defines the TX and SegWitTx classes for parsing Bitcoin transactions.
 - **Utils/**: Contains supporting modules:
     - **helpers.py**: Common functions like get_tx, get_tx_ssh, color_print, etc.
@@ -141,7 +159,25 @@ The project is organized as follows:
     - **bitcoin_ssh_client.py**: Manages the connection to a full-node via SSH.
     - **logger.py**: creates and manages the log file
 - **GUI/**: Contains all files related to the graphical interface.
-- **logs/**: Contains the log file
+- **logs/**: Contains the log file -->
+
+```
+Bitcoin_Transaction_Tree_Visualizer/
+├── main.py                   # Main 
+├── transaction_total.py      # Parser TX e SegWitTX
+├── Utils/                    # Contains all the support modules
+│   ├── helpers.py
+│   ├── tree_builder.py
+│   ├── tree_visualizer.py
+│   ├── bitcoin_ssh_client.py
+│   └── logger.py
+├── GUI/                      # Contains the GUI file
+│   └── Bitcoin_Tree_Gui_Clean.py
+├── logs/
+│   └── log.txt
+├── .env                      # For SSH variables
+└── requirements.txt         
+```
 
 ## Output
 
