@@ -9,7 +9,7 @@ from colorama import Fore, Style
 def setup_logger():
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
-    log_file = log_dir / "BitcoinTree.log"
+    log_file = log_dir / f"BitcoinTree_{datetime.now().strftime('%Y-%m-%d')}.log"
 
     logging.basicConfig(
         filename=log_file,
