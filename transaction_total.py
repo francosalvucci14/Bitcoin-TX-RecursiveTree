@@ -59,11 +59,14 @@ class SegWitTx(TX):
     def __str__(self):
         out = {
             "version": self.version,
+            "marker":self.marker.hex(),
+            "flag": self.flag.hex(),
             "inputs": [json.loads(str(txin)) for txin in self.inputs],
             "outputs": [json.loads(str(txout)) for txout in self.outputs],
             "witness": (
                 [
                     {
+                        "num_elements": len(wit),
                         "elements": [w.hex() for w in wit],
                         "type": Script.from_witness(wit).get_type(),
                     }

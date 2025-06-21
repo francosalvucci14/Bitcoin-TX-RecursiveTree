@@ -47,7 +47,7 @@ class Script:
         if self.cmds[0] == "op_dup" and self.cmds[1] == "op_hash160" and \
            self.cmds[-2] == "op_equalverify" and self.cmds[-1] == "op_checksig":
             return "P2PKH"
-        elif self.cmds[0] == "op_hash160" and self.cmds[-2] == "op_equal" and self.cmds[-1] == "op_checksig":
+        elif self.cmds[0] == "op_hash160" and self.cmds[-1] == "op_equal":
             return "P2SH"
         elif self.cmds[0] == "op_return":
             return "OP_RETURN"
