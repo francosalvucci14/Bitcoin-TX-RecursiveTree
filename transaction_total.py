@@ -68,7 +68,7 @@ class SegWitTx(TX):
                     {
                         "num_elements": len(wit),
                         "elements": [w.hex() for w in wit],
-                        "type": Script.from_witness(wit).get_type(),
+                        #"type": Script.from_witness(wit).get_type(),
                     }
                     for wit in self.witness
                 ]
@@ -124,7 +124,7 @@ class TXIn:
             "prevtx": self.prevtx.hex(),
             "prevtxidx": self.prevtxidx,
             "scriptsig": self.script.cmds,
-            "type": self.script.get_type(),
+            #"type": self.script.get_type(),
             "sequence": self.sequence,
         }
         return json.dumps(out, indent=4)

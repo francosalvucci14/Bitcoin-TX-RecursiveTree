@@ -37,9 +37,9 @@ class Script:
                 cmds.append(helpers.OPCODES.get(first, f'op_{first}'))
         return cls(cmds)
 
-    @classmethod
-    def from_witness(cls, witness_stack):
-        return cls([w.hex() for w in witness_stack])
+    # @classmethod
+    # def from_witness(cls, witness_stack):
+    #     return cls([w.hex() for w in witness_stack])
 
     def get_type(self):
         if len(self.cmds) == 0:
@@ -53,10 +53,10 @@ class Script:
             return "OP_RETURN"
         elif self.cmds[1:] and self.cmds[-1] == "op_checksig":
             return "P2PK"
-        elif self.cmds[0] == "op_0" and len(self.cmds) == 2 and len(bytes.fromhex(self.cmds[1])) == 20:
-            return "P2WPKH"
-        elif self.cmds[0] == "op_0" and len(self.cmds) == 2 and len(bytes.fromhex(self.cmds[1])) == 32:
-            return "P2WSH"
+        # elif self.cmds[0] == "op_0" and len(self.cmds) == 2 and len(bytes.fromhex(self.cmds[1])) == 20:
+        #     return "P2WPKH"
+        # elif self.cmds[0] == "op_0" and len(self.cmds) == 2 and len(bytes.fromhex(self.cmds[1])) == 32:
+        #     return "P2WSH"
         return "Unknown Script"
 
 if __name__ == "__main__":
