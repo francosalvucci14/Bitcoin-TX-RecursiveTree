@@ -4,5 +4,5 @@ networkx>=3.2.1
 paramiko>=3.4.0
 python-dotenv>=1.1.0
 requests>=2.31.0
-colorama=>0.4.4
+colorama>=0.4.4
 pygraphviz>=1.11
